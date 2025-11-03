@@ -1,0 +1,21 @@
+/* Navbar specific styles */
+.navbar {
+  height: 64px;
+  z-index: 1050;
+}
+
+.navbarButton {
+  transition: all 0.2s ease-in-out;
+}
+
+.navbarButton:hover {
+  background-color: #f3f4f6 !important;
+}
+
+.navbarAvatar {
+  cursor: pointer;
+}
+
+.searchInput {
+  padding: 8px 20px;
+}

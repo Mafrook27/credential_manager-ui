@@ -1,0 +1,72 @@
+/* src/common/components/DataTable/DataTable.module.css */
+
+/**
+ * Mobile-responsive container for DataGrid
+ */
+.dataGridContainer {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  -ms-overflow-style: -ms-autohiding-scrollbar;
+}
+
+.dataGridWrapper {
+  min-width: 710px;
+}
+
+/* Tablet view */
+@media (max-width: 768px) {
+  .dataGridWrapper {
+    min-width: 600px;
+  }
+}
+
+/* Mobile view */
+@media (max-width: 576px) {
+  .dataGridWrapper {
+    min-width: 500px;
+  }
+}
+
+/* Disable column dragging/reordering */
+.disableColumnDrag :global(.MuiDataGrid-columnHeader) {
+  cursor: default !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+.disableColumnDrag :global(.MuiDataGrid-columnHeader):hover {
+  cursor: default !important;
+}
+
+.disableColumnDrag :global(.MuiDataGrid-columnHeader):active {
+  cursor: default !important;
+}
+
+.disableColumnDrag :global(.MuiDataGrid-columnSeparator) {
+  display: none !important;
+}
+
+.disableColumnDrag :global(.MuiDataGrid-columnHeaderDraggableContainer) {
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+.disableColumnDrag :global(.MuiDataGrid-columnHeaderTitleContainer) {
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+.disableColumnDrag :global(.MuiDataGrid-iconButtonContainer) {
+  pointer-events: auto !important;
+}
+
+.disableColumnDrag :global(.MuiDataGrid-menuIcon) {
+  pointer-events: auto !important;
+}
+
+.disableColumnDrag :global(.MuiDataGrid-sortIcon) {
+  pointer-events: auto !important;
+}

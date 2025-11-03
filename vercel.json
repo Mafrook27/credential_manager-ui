@@ -1,0 +1,10 @@
+{
+  "installCommand": "bun install",
+
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

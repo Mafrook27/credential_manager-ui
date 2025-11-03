@@ -1,0 +1,105 @@
+/* DataGrid Container Styles */
+.dataGridContainer {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  -ms-overflow-style: -ms-autohiding-scrollbar;
+}
+
+.dataGridWrapper {
+  min-width: 710px;
+}
+
+/* Column Header Styles */
+.columnHeaders {
+  background-color: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+  font-size: 0.813rem;
+  font-weight: 600;
+  color: #6b7280;
+  min-height: 48px !important;
+  max-height: 48px !important;
+}
+
+.columnHeaderTitle {
+  font-weight: 600;
+}
+
+/* Cell Styles */
+.dataGridCell {
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 0.875rem;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+}
+
+/* Row Styles */
+.dataGridRow {
+  min-height: 72px !important;
+  max-height: 72px !important;
+}
+
+.dataGridRow:hover {
+  background-color: #f9fafb;
+}
+
+/* Virtual Scroller */
+.virtualScroller {
+  min-height: 400px;
+}
+
+.virtualScrollerCompact {
+  min-height: auto;
+}
+
+/* Menu Icons */
+.menuIcon {
+  visibility: visible;
+}
+
+.sortIcon {
+  opacity: 0.5;
+}
+
+/* Footer Container */
+.footerContainer {
+  min-height: 52px;
+  border-top: 1px solid #e5e7eb;
+  overflow: visible;
+}
+
+/* Pagination Styles */
+.paginationRoot {
+  overflow: visible;
+}
+
+.paginationToolbar {
+  min-height: 52px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.paginationSelectLabel {
+  font-size: 0.875rem;
+  margin: 0;
+  display: block !important;
+  visibility: visible !important;
+}
+
+.paginationDisplayedRows {
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.paginationSelect {
+  padding-left: 8px;
+  padding-right: 24px;
+  display: block !important;
+  visibility: visible !important;
+}
+
+.paginationInput {
+  display: block !important;
+  visibility: visible !important;
+}

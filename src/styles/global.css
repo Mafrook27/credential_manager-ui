@@ -1,0 +1,198 @@
+/* Import Bootstrap CSS */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+/* Import Tailwind CSS */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles to make Bootstrap and Tailwind work together */
+:root {
+  font-family: Poppins, system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light; /* Changed from 'light dark' */
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+/* body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+} */
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+/* FIX: Prevent button hover flicker in Chrome dark mode */
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s ease-in-out;
+  color-scheme: light; /* Prevent Chrome auto dark mode */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+button:hover {
+  border-color: #646cff;
+}
+
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+
+/* Bootstrap and Tailwind compatibility fixes */
+.btn {
+  @apply inline-flex items-center justify-center;
+  color-scheme: light !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+.btn:hover,
+.btn:focus,
+.btn:active {
+  color-scheme: light !important;
+}
+
+/* Tailwind button hover flicker fixes */
+@layer components {
+  /* Fix for all Tailwind hover states */
+  .hover\:bg-gray-100:hover,
+  .hover\:bg-gray-200:hover,
+  .hover\:bg-gray-300:hover,
+  .hover\:bg-blue-500:hover,
+  .hover\:bg-blue-600:hover,
+  .hover\:bg-red-500:hover,
+  .hover\:bg-green-500:hover {
+    color-scheme: light !important;
+    transition: all 0.15s ease-in-out !important;
+  }
+
+  /* Fix for Tailwind dark mode hover variants */
+  .dark\:hover\:bg-gray-700:hover,
+  .dark\:hover\:bg-gray-800:hover {
+    color-scheme: light !important;
+  }
+
+  /* Fix for group hover effects */
+  .group:hover .group-hover\:bg-gray-100,
+  .group:hover .group-hover\:bg-blue-500 {
+    color-scheme: light !important;
+    transition: all 0.15s ease-in-out !important;
+  }
+}
+
+/* Universal fix for all hover utilities */
+@layer utilities {
+  [class*="hover:"]:hover {
+    color-scheme: light !important;
+    transition: all 0.15s ease-in-out !important;
+  }
+}
+
+/* Specific fixes for Bootstrap button variants */
+.btn-light {
+  background-color: #f8f9fa !important;
+  border-color: #f8f9fa !important;
+  color: #212529 !important;
+}
+
+.btn-light:hover {
+  background-color: #e2e6ea !important;
+  border-color: #dae0e5 !important;
+  color: #212529 !important;
+}
+
+.btn-primary {
+  transition: all 0.15s ease-in-out !important;
+}
+
+.btn-secondary {
+  transition: all 0.15s ease-in-out !important;
+}
+
+/* Ensure MUI components work with Bootstrap */
+.MuiContainer-root {
+  width: 100% !important;
+}
+
+/* Prevent MUI buttons from flickering */
+.MuiButton-root,
+.MuiIconButton-root {
+  color-scheme: light !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+/* Custom utility classes mixing all frameworks */
+.auth-gradient {
+  background: linear-gradient(135deg, #2962FF 0%, #00BFA5 100%);
+}
+
+.shadow-custom {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Full width layout fixes */
+.container-fluid {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  max-width: none !important;
+  width: 100% !important;
+}
+
+/* Waveform loader animation */
+@keyframes waveform {
+  0%, 100% {
+    transform: scaleY(0.5);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.animate-waveform {
+  animation: waveform 1s ease-in-out infinite;
+  transform-origin: bottom;
+}

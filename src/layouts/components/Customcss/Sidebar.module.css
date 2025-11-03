@@ -1,0 +1,65 @@
+/* Sidebar specific styles */
+.sidebar {
+  width: 280px;
+}
+
+.sidebarNav {
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+/* Custom Scrollbar for Sidebar */
+.sidebarNav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebarNav::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.sidebarNav::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.sidebarNav::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Menu Item */
+.menuItem {
+  transition: all 0.2s ease-in-out;
+}
+
+.menuItem:hover {
+
+  background-color: rgb(244, 240, 255) !important;
+}
+
+.menuItemActive {
+  background-color: rgb(244, 240, 255) !important;
+  color: rgb(0, 0, 0) !important;
+}
+
+/* Switch Menu Item (Admin/Vault button) */
+.switchMenuItem {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.switchMenuItem:hover {
+  background-color: #fee2e2 !important;
+  color: #dc2626 !important;
+}
+
+/* Close Button */
+.closeButton {
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.closeButton:hover {
+  background-color: #e5e7eb;
+}
