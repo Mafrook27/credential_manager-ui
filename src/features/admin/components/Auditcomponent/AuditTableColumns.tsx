@@ -91,7 +91,7 @@ export const getAuditTableColumns = (): GridColDef[] => [
     minWidth: 220,
     filterable: true,
     sortable: true,
-    valueGetter: (value: any, row: any) => {
+    valueGetter: (_value: any, row: any) => {
       // For filtering: combine serviceName and subInstanceName
       const serviceName = row.serviceName || 'Unknown';
       const subInstanceName = row.subInstanceName || row.credential?.subInstance?.name || 'N/A';

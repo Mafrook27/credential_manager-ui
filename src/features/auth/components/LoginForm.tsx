@@ -107,10 +107,10 @@ function LoginForm() {
 
     setLoading(true);
     try {
-const result =await dispatch(login(formData) as any);
+const result = await dispatch(login(formData) as any);
 
     if (result?.payload?.data?.user?._id) {
-      await dispatch(getUserProfile() as any);  // ← No parameter!
+      await dispatch(getUserProfile(result.payload.data.user._id) as any);
     }
       navigate('/dashboard');
     } catch (err: any) {
