@@ -42,14 +42,11 @@
 import React, { useState } from 'react';
 import Navbar from './components/NavBar';
 import Sidebar from './components/Sidebar';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet} from 'react-router-dom';
 import ProtectedRoute from '../common/components/ProtectedRoute';
 
 const DashboardLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const location = useLocation();
-  const pagesWithSearch = ['/credentials', '/admin/credentials'];
-  const showSearch = pagesWithSearch.includes(location.pathname);
   
   return (
     <ProtectedRoute requireVerification={true}>
@@ -57,7 +54,6 @@ const DashboardLayout: React.FC = () => {
         {/* Navbar */}
         <Navbar 
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-          showSearch={showSearch}
         />
 
         {/* Sidebar */}
