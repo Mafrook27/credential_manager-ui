@@ -144,6 +144,14 @@ export const adminApi = {
     return response.data;
   },
 
+  // Block user (disapprove)
+  blockUser: async (userId: string) => {
+    const response = await axiosInstance.get(
+      `/admin/users/block/${userId}`
+    );
+    return response.data;
+  },
+
   // Change user password
   changeUserPassword: async (userId: string, data: ChangePasswordData) => {
     const response = await axiosInstance.post(

@@ -28,12 +28,14 @@ export const UserManagementTable: React.FC = () => {
     isEditPasswordModalOpen,
     isDeleteModalOpen,
     isApproveModalOpen,
+    isBlockModalOpen,
     isLoading: actionLoading,
     refreshTrigger,
     setPaginationModel,
     handleMenuClick,
     handleMenuClose,
     handleApprove,
+    handleBlock,
     handleEditUser,
     handleEditPassword,
     handleDelete,
@@ -41,10 +43,12 @@ export const UserManagementTable: React.FC = () => {
     handleSavePassword,
     handleConfirmDelete,
     handleConfirmApprove,
+    handleConfirmBlock,
     setIsEditUserModalOpen,
     setIsEditPasswordModalOpen,
     setIsDeleteModalOpen,
     setIsApproveModalOpen,
+    setIsBlockModalOpen,
   } = useUserTable();
 
   // Fetch users from backend when pagination changes
@@ -114,6 +118,7 @@ export const UserManagementTable: React.FC = () => {
         onEditUser={handleEditUser}
         onEditPassword={handleEditPassword}
         onDelete={handleDelete}
+        onBlock={handleBlock}
       />
 
       {/* Edit User Modal */}
@@ -154,6 +159,17 @@ export const UserManagementTable: React.FC = () => {
         message={`Are you sure you want to approve ${selectedUser?.name}?`}
         confirmText="Approve"
         confirmButtonClass="bg-green-600 hover:bg-green-700"
+      />
+
+      {/* Disable Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isBlockModalOpen}
+        onClose={() => setIsBlockModalOpen(false)}
+        onConfirm={handleConfirmBlock}
+        title="Disable User"
+        message={`Are you sure you want to disable ${selectedUser?.name}? This will deactivate their account.`}
+        confirmText="Disable"
+        confirmButtonClass="bg-red-600 hover:bg-red-700"
       />
     </>
   );

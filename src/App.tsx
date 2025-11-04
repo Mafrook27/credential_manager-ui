@@ -7,6 +7,7 @@ import './styles/global.css';
 // Create MUI theme that works with Bootstrap and Tailwind
 const theme = createTheme({
   palette: {
+    mode: 'light',
     primary: {
       main: '#2962FF',
     },

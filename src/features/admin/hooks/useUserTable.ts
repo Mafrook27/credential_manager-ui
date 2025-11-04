@@ -23,6 +23,7 @@ export const useUserTable = () => {
   const [isEditPasswordModalOpen, setIsEditPasswordModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
+  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
 
   const handleMenuClick = useCallback((event: React.MouseEvent<HTMLElement>, user: User) => {
     event.stopPropagation();
@@ -56,6 +57,12 @@ export const useUserTable = () => {
     const user = selectedUser || { id: userId } as User;
     setSelectedUser(user);
     setIsDeleteModalOpen(true);
+  }, [selectedUser]);
+
+  const handleBlock = useCallback((userId: string) => {
+    const user = selectedUser || { id: userId } as User;
+    setSelectedUser(user);
+    setIsBlockModalOpen(true);
   }, [selectedUser]);
 
   // Modal actions
@@ -133,13 +140,11 @@ export const useUserTable = () => {
   const handleConfirmApprove = useCallback(async () => {
     try {
       setIsLoading(true);
-      // console.log('✅ Approving user:', selectedUser?.id);
       
       if (!selectedUser?.id) return;
       
       await adminApi.approveUser(selectedUser.id);
       
-      // console.log('✅ User approved successfully');
       toast.success('User approved successfully!');
       
       setIsApproveModalOpen(false);
@@ -147,8 +152,28 @@ export const useUserTable = () => {
       setRefreshTrigger(prev => prev + 1);
     } catch (error) {
       const err = error as AxiosError<{ message?: string }>;
-      // console.error('❌ Error approving user:', err);
       toast.error(err.response?.data?.message || 'Failed to approve user');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedUser]);
+
+  const handleConfirmBlock = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      
+      if (!selectedUser?.id) return;
+      
+      await adminApi.blockUser(selectedUser.id);
+      
+      toast.success('User disabled successfully!');
+      
+      setIsBlockModalOpen(false);
+      setSelectedUser(null);
+      setRefreshTrigger(prev => prev + 1);
+    } catch (error) {
+      const err = error as AxiosError<{ message?: string }>;
+      toast.error(err.response?.data?.message || 'Failed to disable user');
     } finally {
       setIsLoading(false);
     }
@@ -166,6 +191,7 @@ export const useUserTable = () => {
     isEditPasswordModalOpen,
     isDeleteModalOpen,
     isApproveModalOpen,
+    isBlockModalOpen,
     isLoading,
     refreshTrigger,
     triggerRefresh,
@@ -173,6 +199,7 @@ export const useUserTable = () => {
     handleMenuClick,
     handleMenuClose,
     handleApprove,
+    handleBlock,
     handleEditUser,
     handleEditPassword,
     handleDelete,
@@ -180,9 +207,11 @@ export const useUserTable = () => {
     handleSavePassword,
     handleConfirmDelete,
     handleConfirmApprove,
+    handleConfirmBlock,
     setIsEditUserModalOpen,
     setIsEditPasswordModalOpen,
     setIsDeleteModalOpen,
     setIsApproveModalOpen,
+    setIsBlockModalOpen,
   };
 };

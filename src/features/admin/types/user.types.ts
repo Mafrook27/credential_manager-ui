@@ -27,4 +27,5 @@ export interface UserActionsMenuProps {
   onEditUser: (userId: string) => void;
   onEditPassword: (userId: string) => void;
   onDelete: (userId: string) => void;
+  onBlock: (userId: string) => void;
 }
