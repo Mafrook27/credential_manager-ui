@@ -155,14 +155,14 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
 
   const validateFolderName = useCallback((name: string): string => {
     const trimmed = name.trim();
-    if (!trimmed) return 'Folder name is required';
-    if (trimmed.length < 1) return 'Folder name must be at least 1 character';
-    if (trimmed.length > 50) return 'Folder name cannot exceed 50 characters';
+    if (!trimmed) return 'subinstance name is required';
+    if (trimmed.length < 1) return 'sub instance name must be at least 1 character';
+    if (trimmed.length > 50) return 'sub instance name cannot exceed 50 characters';
     
     const instance = instances.find(i => i.rootInstanceId === selectedInstanceId);
     
     if (instance && trimmed.toLowerCase() === instance.serviceName.toLowerCase()) {
-      return 'Folder name cannot be the same as service name';
+      return 'sub instance name cannot be the same as service name';
     }
     
     const isDuplicate = instance?.subInstances?.some(
@@ -170,7 +170,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
              sub.subInstanceId !== editingSub?.id
     );
     
-    if (isDuplicate) return 'A folder with this name already exists in this service';
+    if (isDuplicate) return 'A sub instance with this name already exists in this service';
     return '';
   }, [instances, selectedInstanceId, editingSub]);
 
@@ -283,7 +283,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
       
       onSuccess?.();
     } catch (error: any) {
-      console.error('Save folder failed:', error);
+      console.error('Save sub instance failed:', error);
       const errorData = error.response?.data;
       const errorMsg = errorData?.message || 'Failed to save folder';
       setFolderError(errorMsg);
@@ -749,8 +749,8 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
       <Modal
         isOpen={isOpen}
         onClose={onClose}
-        title="Manage Services & Folders"
-        subtitle="Organize your credentials by services and associated folders"
+        title="Manage Services & sub instance"
+        subtitle="Organize your credentials by services and associated sub instance"
         maxWidth="2xl"
       >
         <div className="flex flex-col md:flex-row border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 h-[70vh] sm:h-[65vh] max-h-[600px] overflow-hidden shadow-xl">

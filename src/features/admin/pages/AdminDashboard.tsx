@@ -403,7 +403,7 @@ const AdminDashboard: React.FC = () => {
             <QuickActionButton label="Add New User" icon={<MdAdd />} onClick={() => setShowAddUserModal(true)} iconBgColor="#dbeafe" iconColor="#2563eb" />
           </div>
           <div className="col-12 col-sm-6 col-lg-4 col-xl-3">
-            <QuickActionButton label="Instances management" icon={<MdDescription />} onClick={() => setShowInstanceModal(true)} subtitle="Manage services & folders" iconBgColor="#eef2ff" iconColor="#5468ff" />
+            <QuickActionButton label="Instances management" icon={<MdDescription />} onClick={() => setShowInstanceModal(true)} subtitle="Manage services & sub instances" iconBgColor="#eef2ff" iconColor="#5468ff" />
           </div>
           <div className="col-12 col-sm-6 col-lg-4 col-xl-3">
             <QuickActionButton 

@@ -438,7 +438,7 @@ const handleOpenEditModal = useCallback((credential: ApiCredential) => {
                 }}
                 disabled={!selectedRootInstance}
                 renderInput={(params) => (
-                  <TextField {...params} label="Filter by Folder" placeholder="Select folder" size="small" />
+                  <TextField {...params} label="Filter by subinstance" placeholder="Select subinstance" size="small" />
                 )}
                 className="w-full"
               />

@@ -102,7 +102,7 @@ export const SubInstanceAutocomplete: React.FC<Props> = ({
           (s) => s.name.toLowerCase() === inputValue.toLowerCase()
         ) && (
           <p className="text-xs text-gray-500 mt-1">
-            Press Enter to add "{inputValue}" as a new folder
+            Press Enter to add "{inputValue}" as a new subinstance
           </p>
         )}
     </div>
