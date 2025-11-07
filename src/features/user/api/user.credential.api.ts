@@ -9,7 +9,6 @@ export interface Credential {
   rootInstance?: {
     _id: string;
     serviceName: string;
-    type: string;
   };
   subInstance?: {
     _id: string;
@@ -23,7 +22,6 @@ export interface Credential {
   };
   // Flat structure (fallback)
   serviceName?: string;
-  type?: string;
   subInstanceName?: string;
   username?: string;
   password?: string; // "[ENCRYPTED]" or decrypted value
@@ -47,7 +45,6 @@ export interface Credential {
 
 export interface GetCredentialsParams {
   search?: string;
-  type?: string;
   page?: number;
   limit?: number;
 }
@@ -189,7 +186,7 @@ export const userCredentialApi = {
   /**
    * Get all credentials (owned and shared)
    * GET /api/users/credentials
-   * Supports search, filtering by type, and pagination
+   * Supports search and pagination
    */
   getCredentials: async (params?: GetCredentialsParams): Promise<GetCredentialsResponse> => {
     const response = await axiosInstance.get('/users/credentials', { params });
@@ -209,7 +206,7 @@ export const userCredentialApi = {
    * Create a new credential
    * POST /api/users/credentials?rootId={rootId}&subId={subId}
    * @param rootId - Root instance ID (service)
-   * @param subId - Sub-instance ID (folder)
+   * @param subId - Sub-instance ID
    * @param data - Credential data (username, password, url, notes)
    */
   createCredential: async (

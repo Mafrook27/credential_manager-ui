@@ -17,7 +17,6 @@ import type {
 
 export interface GetCredentialsParams {
   search?: string;
-  type?: string;
   page?: number;
   limit?: number;
 }
@@ -45,7 +44,6 @@ export const getAllCredentials = async (
   const response = await axios.get<CredentialsResponse>('/admin/credentials', {
     params: {
       search: params.search || undefined,
-      type: params.type || undefined,
       page: params.page || 1,
       limit: params.limit || 5,
     },

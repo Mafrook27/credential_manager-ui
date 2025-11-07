@@ -32,8 +32,8 @@ function AuthLayout({ children, image, title, subtitle }: AuthLayoutProps) {
           <Box sx={{ textAlign: 'center', px: 5 }}>
             {/* Logo - STATIC */}
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 4 }}>
-              <Lock sx={{ fontSize: 48, marginRight: 2 }} />
-              <h1 style={{ fontWeight: 'bold', margin: 0 }}>Creds</h1>
+              <Lock sx={{ fontSize: 42, marginRight: 2 }} />
+              <h2 style={{ fontWeight: 'bold', margin: 0 }}>SparkLMS</h2>
             </Box>
 
             {/* Image - DYNAMIC (Changes per page) */}
@@ -71,7 +71,7 @@ function AuthLayout({ children, image, title, subtitle }: AuthLayoutProps) {
             <Box sx={{ display: { lg: 'none' }, textAlign: 'center', mb: 4 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2, color: '#2962FF' }}>
                 <Lock sx={{ fontSize: 40, marginRight: 1 }} />
-                <h2 style={{ fontWeight: 'bold', margin: 0 }}>Creds</h2>
+                <h2 style={{ fontWeight: 'bold', margin: 0 }}>SparkLMS</h2>
               </Box>
             </Box>
 

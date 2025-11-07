@@ -1,7 +1,8 @@
 import * as types from './actionTypes';
 import type { LoginCredentials, RegisterData, AuthResponse, ResetPasswordRequest, ResetPasswordVerify } from './types';
-import { login as loginAPI, register as registerAPI, resetPasswordRequest as resetPasswordRequestAPI, resetPasswordVerify as resetPasswordVerifyAPI, getUserProfile as getUserProfileAPI } from '../api';
+import { login as loginAPI, register as registerAPI, resetPasswordRequest as resetPasswordRequestAPI, resetPasswordVerify as resetPasswordVerifyAPI, getUserProfile as getUserProfileAPI, logout as logoutAPI } from '../api';
 import type { Dispatch } from 'redux';
+import { getAuthErrorMessage } from '../utils/authErrorHandler';
 
 export const loginRequest = () => ({
   type: types.LOGIN_REQUEST,
@@ -31,9 +32,21 @@ export const registerFailure = (error: string) => ({
   payload: error,
 });
 
-export const logout = () => ({
+export const logoutSuccess = () => ({
   type: types.LOGOUT,
 });
+
+// Thunk action for logout
+export const logout = () => async (dispatch: Dispatch) => {
+  try {
+    await logoutAPI();
+    dispatch(logoutSuccess());
+  } catch (error: any) {
+    // Even if logout API fails, clear local state
+    console.error('Logout API error:', error);
+    dispatch(logoutSuccess());
+  }
+};
 
 export const clearError = () => ({
   type: types.CLEAR_ERROR,
@@ -59,7 +72,6 @@ export const login = (credentials: LoginCredentials) => async (dispatch: Dispatc
   try {
     dispatch(loginRequest());
     const response = await loginAPI(credentials);
-    // Extract user and token from response.data
     dispatch(loginSuccess({
       success: response.success,
       data: response.data,
@@ -67,7 +79,7 @@ export const login = (credentials: LoginCredentials) => async (dispatch: Dispatc
     }));
     return response;
   } catch (error: any) {
-    const errorMessage = error.response?.data?.message || 'Login failed';
+    const errorMessage = getAuthErrorMessage(error);
     dispatch(loginFailure(errorMessage));
     throw error;
   }
@@ -77,7 +89,6 @@ export const register = (data: RegisterData) => async (dispatch: Dispatch) => {
   try {
     dispatch(registerRequest());
     const response = await registerAPI(data);
-    // Extract user and token from response.data
     dispatch(registerSuccess({
       success: response.success,
       data: response.data,
@@ -85,7 +96,7 @@ export const register = (data: RegisterData) => async (dispatch: Dispatch) => {
     }));
     return response;
   } catch (error: any) {
-    const errorMessage = error.response?.data?.message || 'Registration failed';
+    const errorMessage = getAuthErrorMessage(error);
     dispatch(registerFailure(errorMessage));
     throw error;
   }
@@ -128,7 +139,7 @@ export const resetPassword = (data: ResetPasswordRequest) => async (dispatch: Di
     dispatch(resetPasswordSuccess(response.message));
     return response;
   } catch (error: any) {
-    const errorMessage = error.response?.data?.message || 'Reset password request failed';
+    const errorMessage = getAuthErrorMessage(error);
     dispatch(resetPasswordFailure(errorMessage));
     throw error;
   }
@@ -141,7 +152,7 @@ export const verifyResetPassword = (data: ResetPasswordVerify) => async (dispatc
     dispatch(resetPasswordVerifySuccess(response.message));
     return response;
   } catch (error: any) {
-    const errorMessage = error.response?.data?.message || 'Password reset verification failed';
+    const errorMessage = getAuthErrorMessage(error);
     dispatch(resetPasswordVerifyFailure(errorMessage));
     throw error;
   }
@@ -159,7 +170,7 @@ export const getUserProfile = (userId: string) => async (dispatch: Dispatch) => 
     }));
     return response;
   } catch (error: any) {
-    const errorMessage = error.response?.data?.message || 'Failed to get user profile';
+    const errorMessage = getAuthErrorMessage(error);
     dispatch(getUserProfileFailure(errorMessage));
     throw error;
   }

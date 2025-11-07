@@ -19,6 +19,7 @@ interface UserData {
   email: string;
   role: string;
   isVerified: boolean;
+  isActive?: boolean;
   createdAt?: string;
 }
 
@@ -58,7 +59,7 @@ export const AllCredentialsPage: React.FC = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [limit, setLimit] = useState(10);
 
-  const [filterType, setFilterType] = useState<string>('');
+
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
 
   // Modal state
@@ -78,7 +79,7 @@ export const AllCredentialsPage: React.FC = () => {
   // Fetch credentials when debounced search or other params change
   useEffect(() => {
     fetchCredentials();
-  }, [debouncedSearchQuery, currentPage, filterType, limit]);
+  }, [debouncedSearchQuery, currentPage, limit]);
 
   useEffect(() => {
     fetchUsers();
@@ -93,7 +94,6 @@ export const AllCredentialsPage: React.FC = () => {
         search: debouncedSearchQuery,
         page: currentPage,
         limit: limit,
-        type: filterType || undefined,
       };
       
       // console.log('🔍 Fetching credentials with params:', params);
@@ -146,7 +146,9 @@ export const AllCredentialsPage: React.FC = () => {
         name: user.name,
         email: user.email,
         role: user.role as 'admin' | 'user',
-        status: (user.isVerified ? 'active' : 'pending') as UserStatus,
+        status: (!user.isActive ? 'inactive' : (user.isVerified ? 'active' : 'pending')) as UserStatus,
+        isVerified: user.isVerified,
+        isActive: user.isActive,
         createdAt: user.createdAt,
       }));
       setAvailableUsers(mappedUsers);
@@ -156,10 +158,7 @@ export const AllCredentialsPage: React.FC = () => {
     }
   };
 
-  const handleFilterChange = (newFilter: string) => {
-    setFilterType(newFilter);
-    setCurrentPage(1);
-  };
+
 
   const handleLimitChange = (newLimit: number) => {
     setLimit(newLimit);
@@ -312,23 +311,7 @@ export const AllCredentialsPage: React.FC = () => {
               </div>
             </form>
 
-            {/* Filter by Type */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <label className="text-xs sm:text-sm font-medium text-gray-700 whitespace-nowrap">Filter:</label>
-              <select
-                value={filterType}
-                onChange={(e) => handleFilterChange(e.target.value)}
-                className="flex-1 sm:flex-none px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-xs sm:text-sm"
-              >
-                <option value="">All Types</option>
-                <option value="cloud">Cloud</option>
-                <option value="banking">Banking</option>
-                <option value="development">Development</option>
-                <option value="email">Email</option>
-                <option value="social">Social</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
+
           </div>
         </div>
 
@@ -378,7 +361,6 @@ export const AllCredentialsPage: React.FC = () => {
                       id={credential._id}
                       serviceName={credential.rootInstance.serviceName}
                       credentialName={credential.subInstance.name}
-                      type={credential.rootInstance.type}
                       username={username}
                       password={password}
                       url={url}
@@ -403,7 +385,7 @@ export const AllCredentialsPage: React.FC = () => {
               <div className="text-center py-16 bg-white border border-gray-200 rounded-lg">
                 {/* Icon */}
                 <div className="mb-4">
-                  {isActuallySearching || filterType ? (
+                  {isActuallySearching ? (
                     <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
@@ -416,20 +398,17 @@ export const AllCredentialsPage: React.FC = () => {
 
                 {/* Message */}
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {isActuallySearching || filterType ? 'No Results Found' : 'No Credentials Yet'}
+                  {isActuallySearching ? 'No Results Found' : 'No Credentials Yet'}
                 </h3>
                 <p className="text-gray-600 text-sm sm:text-base mb-4">
-                  {isActuallySearching || filterType ? (
+                  {isActuallySearching  ? (
                     <>
                       No credentials found
                       {isActuallySearching && (
                         <> matching <span className="font-semibold text-gray-900">"{searchQuery}"</span></>
                       )}
-                      {filterType && !isActuallySearching && (
-                        <> for type <span className="font-semibold text-gray-900">"{filterType}"</span></>
-                      )}
                       <br />
-                      <span className="text-xs text-gray-500 mt-1 inline-block">Try adjusting your search or filter</span>
+                      <span className="text-xs text-gray-500 mt-1 inline-block">Try adjusting your search</span>
                     </>
                   ) : (
                     'Get started by creating your first credential'
@@ -437,24 +416,14 @@ export const AllCredentialsPage: React.FC = () => {
                 </p>
 
                 {/* Action Buttons */}
-                {isActuallySearching || filterType ? (
+                {isActuallySearching ? (
                   <div className="flex gap-2 justify-center">
-                    {isActuallySearching && (
-                      <button 
-                        onClick={() => dispatch(setSearchQuery(''))}
-                        className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
-                      >
-                        Clear Search
-                      </button>
-                    )}
-                    {filterType && (
-                      <button 
-                        onClick={() => handleFilterChange('')}
-                        className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
-                      >
-                        Clear Filter
-                      </button>
-                    )}
+                    <button 
+                      onClick={() => dispatch(setSearchQuery(''))}
+                      className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                    >
+                      Clear Search
+                    </button>
                   </div>
                 ) : (
                   <button 

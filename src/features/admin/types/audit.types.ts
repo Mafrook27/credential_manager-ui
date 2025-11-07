@@ -1,7 +1,6 @@
 // src/features/audit/types/audit.types.ts
 
 export type AuditAction = 'create' | 'decrypt' | 'share' | 'view' | 'update' | 'delete' | 'read' | 'revoke';
-export type ServiceType = 'cloud' | 'banking' | 'development' | 'design' | 'social' | 'payment' | 'personal' | 'work' | 'email' | 'other';
 
 export interface AuditLog {
   _id: string;
@@ -20,7 +19,6 @@ export interface AuditLog {
   } | null;
   serviceName: string;
   subInstanceName?: string; // Stored directly for historical tracking (even after credential deletion)
-  serviceType: ServiceType;
   action: AuditAction;
   timestamp: string;
   ipAddress: string;

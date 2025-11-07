@@ -11,7 +11,6 @@ export interface EditCredentialModalProps {
     id: string;
     serviceName: string;
     credentialName?: string;
-    type: string;
     username: string;
     password: string;
     url?: string;
@@ -28,7 +27,6 @@ export const EditCredentialModal: React.FC<EditCredentialModalProps> = ({
   const [formData, setFormData] = useState({
     serviceName: credential.serviceName,
     credentialName: credential.credentialName || '',
-    type: credential.type,
     username: credential.username,
     password: credential.password,
     url: credential.url || '',
@@ -52,7 +50,7 @@ export const EditCredentialModal: React.FC<EditCredentialModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4 sm:p-6 animate-fadeIn"
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4 sm:p-6 animate-fadeIn"
       onClick={onClose}
     >
       <div
@@ -108,27 +106,6 @@ export const EditCredentialModal: React.FC<EditCredentialModalProps> = ({
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               placeholder="Enter credential name"
             />
-          </div>
-
-          {/* Type */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Type
-            </label>
-            <select
-              value={formData.type}
-              onChange={(e) => handleChange('type', e.target.value)}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white"
-            >
-              <option value="Cloud">Cloud</option>
-              <option value="Banking">Banking</option>
-              <option value="Development">Development</option>
-              <option value="Design">Design</option>
-              <option value="Social">Social</option>
-              <option value="Payment">Payment</option>
-              <option value="Personal">Personal</option>
-              <option value="Work">Work</option>
-            </select>
           </div>
 
           {/* Username */}

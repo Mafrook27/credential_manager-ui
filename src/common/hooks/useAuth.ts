@@ -1,18 +1,20 @@
 // src/common/hooks/useAuth.ts
 import { useSelector } from 'react-redux';
-import { selectUser, selectIsAuthenticated, selectIsVerified, selectAuthLoading } from '../../features/auth/redux/selectors';
+import { selectUser, selectIsAuthenticated, selectIsVerified, selectIsActive, selectAuthLoading } from '../../features/auth/redux/selectors';
 
 
 export const useAuth = () => {
   const user = useSelector(selectUser);
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const isVerified = useSelector(selectIsVerified);
+  const isActive = useSelector(selectIsActive);
   const loading = useSelector(selectAuthLoading);
 
   return {
     user,
     isAuthenticated,
     isVerified,
+    isActive,
     loading,
     isAdmin: user?.role === 'admin',
     isUser: user?.role === 'user',

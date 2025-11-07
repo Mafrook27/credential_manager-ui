@@ -32,6 +32,7 @@ interface ModalProps {
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   closeOnBackdrop?: boolean;
   closeOnEscape?: boolean;
+  zIndex?: number;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -44,6 +45,7 @@ export const Modal: React.FC<ModalProps> = ({
   maxWidth = 'md',
   closeOnBackdrop = true,
   closeOnEscape = true,
+  zIndex = 1000,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -83,7 +85,8 @@ export const Modal: React.FC<ModalProps> = ({
 
   return ReactDOM.createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn"
+      className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn"
+      style={{ zIndex }}
       onClick={handleBackdropClick}
     >
       <div

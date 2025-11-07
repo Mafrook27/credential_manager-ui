@@ -4,39 +4,24 @@ import React, { useState } from 'react';
 import {
   Autocomplete,
   TextField,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
   Box,
 } from '@mui/material';
 // Icons removed for cleaner UI
 
 interface ServiceOption {
   serviceName: string;
-  type: string;
   id?: string;
 }
 
 interface Props {
   value: ServiceOption | null;
   onChange: (value: ServiceOption | null) => void;
-  onRequestCreate: (serviceName: string, type: string) => void;
+  onRequestCreate: (serviceName: string) => void;
   disabled?: boolean;
   error?: boolean;
   helperText?: string;
   existingServices: ServiceOption[];
 }
-
-const SERVICE_TYPES = [
-  'cloud',
-  'banking',
-  'development',
-  'email',
-  'social',
-  'payment',
-  'other',
-];
 
 export const ServiceAutocomplete: React.FC<Props> = ({
   value,
@@ -48,27 +33,9 @@ export const ServiceAutocomplete: React.FC<Props> = ({
   existingServices,
 }) => {
   const [inputValue, setInputValue] = useState('');
-  const [selectedType, setSelectedType] = useState('cloud');
 
   return (
     <Box className="space-y-3">
-      {/* Type Dropdown */}
-      <FormControl fullWidth size="small">
-        <InputLabel>Type</InputLabel>
-        <Select
-          value={selectedType}
-          onChange={(e) => setSelectedType(e.target.value)}
-          label="Type"
-          disabled={disabled}
-        >
-          {SERVICE_TYPES.map((type) => (
-            <MenuItem key={type} value={type}>
-              {type.charAt(0).toUpperCase() + type.slice(1)}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
       {/* Service Name Autocomplete */}
       <Autocomplete
         freeSolo
@@ -76,7 +43,7 @@ export const ServiceAutocomplete: React.FC<Props> = ({
         onChange={(_, newValue) => {
           if (typeof newValue === 'string') {
             // User pressed Enter on free text
-            onRequestCreate(newValue, selectedType);
+            onRequestCreate(newValue);
           } else if (newValue && 'serviceName' in newValue) {
             // User selected existing option
             onChange(newValue);
@@ -88,7 +55,7 @@ export const ServiceAutocomplete: React.FC<Props> = ({
         onInputChange={(_, newInputValue) => {
           setInputValue(newInputValue);
         }}
-        options={existingServices.filter((s) => s.type === selectedType)}
+        options={existingServices}
         getOptionLabel={(option) =>
           typeof option === 'string' ? option : option.serviceName
         }
@@ -114,8 +81,7 @@ export const ServiceAutocomplete: React.FC<Props> = ({
       {inputValue &&
         !existingServices.some(
           (s) =>
-            s.serviceName.toLowerCase() === inputValue.toLowerCase() &&
-            s.type === selectedType
+            s.serviceName.toLowerCase() === inputValue.toLowerCase()
         ) && (
           <p className="text-xs text-gray-500">
             Press Enter to add "{inputValue}" as a new service

@@ -134,11 +134,10 @@ export const UserCredentialPage: React.FC = () => {
     try {
       const response = await instanceApi.listRootInstances();
       const instances = response.data.map((instance: unknown) => {
-        const inst = instance as { rootInstanceId: string; serviceName: string; type: string; createdAt: string };
+        const inst = instance as { rootInstanceId: string; serviceName: string; createdAt: string };
         return {
           rootInstanceId: inst.rootInstanceId,
           serviceName: inst.serviceName,
-          type: inst.type,
           createdAt: inst.createdAt,
         };
       });
@@ -199,6 +198,7 @@ export const UserCredentialPage: React.FC = () => {
           email?: string;
           role?: string;
           isVerified?: boolean;
+          isActive?: boolean;
           createdAt?: string;
         };
 
@@ -207,7 +207,9 @@ export const UserCredentialPage: React.FC = () => {
           name: u.name || '',
           email: u.email || '',
           role: (u.role as UserRole) || 'user',
-          status: u.isVerified ? ('active' as const) : ('pending' as const),
+          status: !u.isActive ? ('inactive' as const) : (u.isVerified ? ('active' as const) : ('pending' as const)),
+          isVerified: u.isVerified,
+          isActive: u.isActive,
           createdAt: u.createdAt || new Date().toISOString(),
         } satisfies User;
       });
@@ -511,9 +513,6 @@ const credData = cred.credentialData || cred;
       credentialName={
         (cred as unknown as { subInstance?: { name: string } })?.subInstance?.name ||
         cred.subInstanceName
-      }
-      type={
-        (cred as unknown as { rootInstance?: { type: string } })?.rootInstance?.type || cred.type
       }
       username={username}        // ✅ Use extracted
       password={password}        // ✅ Use extracted

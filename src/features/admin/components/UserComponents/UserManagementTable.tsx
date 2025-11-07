@@ -68,7 +68,9 @@ export const UserManagementTable: React.FC = () => {
           name: backendUser.name,
           email: backendUser.email,
           role: backendUser.role,
-          status: backendUser.isVerified ? 'active' : 'pending',
+          isVerified: backendUser.isVerified,
+          isActive: backendUser.isActive,
+          status: !backendUser.isActive ? 'inactive' : (backendUser.isVerified ? 'active' : 'pending'),
         }));
         
         setUsers(mappedUsers);
@@ -161,15 +163,19 @@ export const UserManagementTable: React.FC = () => {
         confirmButtonClass="bg-green-600 hover:bg-green-700"
       />
 
-      {/* Disable Confirmation Modal */}
+      {/* Block/Unblock Confirmation Modal */}
       <ConfirmModal
         isOpen={isBlockModalOpen}
         onClose={() => setIsBlockModalOpen(false)}
         onConfirm={handleConfirmBlock}
-        title="Disable User"
-        message={`Are you sure you want to disable ${selectedUser?.name}? This will deactivate their account.`}
-        confirmText="Disable"
-        confirmButtonClass="bg-red-600 hover:bg-red-700"
+        title={selectedUser?.isActive !== false ? "Block User" : "Unblock User"}
+        message={
+          selectedUser?.isActive !== false
+            ? `Are you sure you want to block ${selectedUser?.name}? This will prevent them from accessing the system.`
+            : `Are you sure you want to unblock ${selectedUser?.name}? This will restore their access.`
+        }
+        confirmText={selectedUser?.isActive !== false ? "Block" : "Unblock"}
+        confirmButtonClass={selectedUser?.isActive !== false ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
       />
     </>
   );

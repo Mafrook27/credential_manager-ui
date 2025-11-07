@@ -10,7 +10,6 @@ export interface CredentialCardProps {
   id: string;
   serviceName: string;
   credentialName?: string;
-  type: string;
   username: string;
   password: string;
   url?: string;
@@ -36,7 +35,6 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
   id,
   serviceName,
   credentialName,
-  type,
   username,
   url,
   notes,
@@ -116,9 +114,6 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
                 )}
               </div>
             </div>
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200 flex-shrink-0 ml-1">
-              {type}
-            </span>
           </div>
 
           {/* Credential Name / Sub Instance */}
@@ -205,7 +200,7 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
       {/* Details Modal */}
       {showDetailsModal && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4 sm:p-6 animate-fadeIn"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4 sm:p-6 animate-fadeIn"
           onClick={() => setShowDetailsModal(false)}
         >
           <div
@@ -237,14 +232,6 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
 
             {/* Modal Content */}
             <div className="space-y-3 sm:space-y-4">
-              {/* Type Badge */}
-              <div>
-                <p className="text-xs text-gray-500 font-medium mb-1.5">Type</p>
-                <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                  {type}
-                </span>
-              </div>
-
               {credentialName && (
                 <div>
                   <p className="text-xs text-gray-500 font-medium mb-1.5">Sub Instance Name</p>
@@ -411,7 +398,7 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
       {/* Share Modal with ActionCard */}
       {showShareModal && onShare && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4 sm:p-6 animate-fadeIn"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4 sm:p-6 animate-fadeIn"
           onClick={() => setShowShareModal(false)}
         >
           <div onClick={(e) => e.stopPropagation()}>
@@ -447,7 +434,7 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4 sm:p-6 animate-fadeIn"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4 sm:p-6 animate-fadeIn"
           onClick={() => setShowDeleteModal(false)}
         >
           <div

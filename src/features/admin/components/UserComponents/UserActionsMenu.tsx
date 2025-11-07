@@ -51,8 +51,8 @@ export const UserActionsMenu: React.FC<UserActionsMenuProps> = ({
       <MenuItem onClick={handleEditPassword}>
         <MdLock className="me-2" size={18} /> Edit Password
       </MenuItem>
-      <MenuItem onClick={handleBlock} style={{ color: '#f59e0b' }}>
-        <MdBlock className="me-2" size={18} /> Disable User
+      <MenuItem onClick={handleBlock} style={{ color: selectedUser?.isActive !== false ? '#f59e0b' : '#10b981' }}>
+        <MdBlock className="me-2" size={18} /> {selectedUser?.isActive !== false ? 'Block User' : 'Unblock User'}
       </MenuItem>
       <MenuItem onClick={handleDelete} style={{ color: '#dc2626' }}>
         <MdDelete className="me-2" size={18} /> Delete User

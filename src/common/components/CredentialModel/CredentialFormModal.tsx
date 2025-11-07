@@ -22,7 +22,6 @@ import GlobalLoader from '../GlobalLoader';
 interface FormData {
   serviceId: string | null;
   serviceName: string;
-  serviceType: string;
   subInstanceId: string | null;
   subInstanceName: string;
   username: string;
@@ -54,7 +53,6 @@ export const CredentialFormModal: React.FC<Props> = ({
   const [formData, setFormData] = useState<FormData>({
     serviceId: null,
     serviceName: '',
-    serviceType: 'cloud',
     subInstanceId: null,
     subInstanceName: '',
     username: '',
@@ -78,7 +76,6 @@ export const CredentialFormModal: React.FC<Props> = ({
     open: boolean;
     type: 'service' | 'subinstance';
     name: string;
-    serviceType?: string;
   }>({
     open: false,
     type: 'service',
@@ -123,7 +120,6 @@ export const CredentialFormModal: React.FC<Props> = ({
           setFormData({
             serviceId: initialData.rootInstance?._id || initialData.rootInstance?.rootInstanceId || null,
             serviceName: initialData.rootInstance?.serviceName || '',
-            serviceType: initialData.rootInstance?.type || 'cloud',
             subInstanceId: initialData.subInstance?._id || initialData.subInstance?.subInstanceId || null,
             subInstanceName: initialData.subInstance?.name || '',
             username: credData.username || '',
@@ -176,7 +172,6 @@ export const CredentialFormModal: React.FC<Props> = ({
         ...prev,
         serviceId: serviceId,
         serviceName: value.serviceName,
-        serviceType: value.type,
         subInstanceId: null, // Reset sub-instance
         subInstanceName: '',
       }));
@@ -212,12 +207,11 @@ export const CredentialFormModal: React.FC<Props> = ({
     }
   };
 
-  const handleRequestCreateService = (serviceName: string, type: string) => {
+  const handleRequestCreateService = (serviceName: string) => {
     // Check if exists
     const exists = rootInstances.some(
       (s) =>
-        s.serviceName.toLowerCase() === serviceName.toLowerCase() &&
-        s.type === type
+        s.serviceName.toLowerCase() === serviceName.toLowerCase()
     );
 
     if (exists) {
@@ -233,7 +227,6 @@ export const CredentialFormModal: React.FC<Props> = ({
       open: true,
       type: 'service',
       name: serviceName,
-      serviceType: type,
     });
   };
 
@@ -270,7 +263,6 @@ export const CredentialFormModal: React.FC<Props> = ({
       if (confirmDialog.type === 'service') {
         const response = await instanceApi.createRootInstance({
           serviceName: confirmDialog.name,
-          type: confirmDialog.serviceType!,
         });
 
         const newService = response.data;
@@ -280,7 +272,6 @@ export const CredentialFormModal: React.FC<Props> = ({
           ...prev,
           serviceId: newService.id,
           serviceName: newService.serviceName,
-          serviceType: newService.type,
         }));
 
         toast.success(
@@ -391,7 +382,6 @@ export const CredentialFormModal: React.FC<Props> = ({
     setFormData({
       serviceId: null,
       serviceName: '',
-      serviceType: 'cloud',
       subInstanceId: null,
       subInstanceName: '',
       username: '',
@@ -441,7 +431,6 @@ export const CredentialFormModal: React.FC<Props> = ({
                 formData.serviceId
                   ? {
                       serviceName: formData.serviceName,
-                      type: formData.serviceType,
                       id: formData.serviceId,
                     }
                   : null
@@ -453,7 +442,6 @@ export const CredentialFormModal: React.FC<Props> = ({
               helperText={errors.service}
               existingServices={rootInstances.map((r) => ({
                 serviceName: r.serviceName,
-                type: r.type,
                 id: r.rootInstanceId || r._id || r.id,
               }))}
             />

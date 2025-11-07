@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   IoAddCircleOutline, IoTrashOutline, IoCreateOutline, IoFolderOutline,
-  IoSaveOutline, IoClose, IoAppsOutline, IoChevronDownOutline, 
+  IoSaveOutline, IoClose, 
   IoArrowBackOutline, IoFolderOpenOutline,
 } from 'react-icons/io5';
 import { CircularProgress } from '@mui/material';
 import { Modal } from '../../../../common/components/Modal';
+import { ConfirmModal } from '../../../../common/modals/ConfirmModal';
 import { instanceApi, type RootInstance, type SubInstance } from '../../../../common/api/instanceApi';
 import { toast } from '../../../../common/utils/toast';
 
@@ -15,34 +16,6 @@ interface InstanceManagementModalProps {
   onClose: () => void;
   onSuccess?: () => void;
 }
-
-// ==================== CONSTANTS ====================
-const SERVICE_TYPES = [
-  { value: 'banking', label: 'Banking' },
-  { value: 'email', label: 'Email' },
-  { value: 'cloud', label: 'Cloud' },
-  { value: 'social', label: 'Social' },
-  { value: 'development', label: 'Development' },
-  { value: 'database', label: 'Database' },
-  { value: 'payment', label: 'Payment' },
-  { value: 'hosting', label: 'Hosting' },
-  { value: 'communication', label: 'Communication' },
-  { value: 'other', label: 'Other' },
-] as const;
-
-// ==================== SUB COMPONENTS ====================
-const ServiceTypeIcon: React.FC<{ type: string }> = React.memo(({ type }) => {
-  const typeInfo = SERVICE_TYPES.find(t => t.value === type);
-  return (
-    <div 
-      className="w-7 h-7 sm:w-9 sm:h-9 flex-shrink-0 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center" 
-      title={typeInfo?.label || type}
-    >
-      <IoAppsOutline className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-500 dark:text-gray-400" />
-    </div>
-  );
-});
-ServiceTypeIcon.displayName = 'ServiceTypeIcon';
 
 // ==================== MAIN COMPONENT ====================
 export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = ({
@@ -59,12 +32,23 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
   const [leftPanelView, setLeftPanelView] = useState<'list' | 'add_service' | 'edit_service'>('list');
   const [editingSub, setEditingSub] = useState<{ id: string; name: string } | null>(null);
   const [addingSub, setAddingSub] = useState(false);
-  const [formData, setFormData] = useState({ id: '', name: '', type: 'cloud' });
+  const [formData, setFormData] = useState({ id: '', name: '' });
   
   const [serviceError, setServiceError] = useState('');
   const [folderError, setFolderError] = useState('');
   
   const [inputValue, setInputValue] = useState('');
+  
+  // Confirm dialog state
+  const [confirmDelete, setConfirmDelete] = useState<{
+    open: boolean;
+    type: 'service' | 'subinstance';
+    item: RootInstance | SubInstance | null;
+  }>({
+    open: false,
+    type: 'service',
+    item: null,
+  });
 
   // ==================== COMPUTED VALUES ====================
 
@@ -131,7 +115,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
       });
     } catch (error: any) {
       console.error('Failed to load sub-instances:', error);
-      toast.error('Failed to load folders');
+      toast.error('Failed to load sub-instances');
     }
   }, []);
 
@@ -206,7 +190,6 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
       if (leftPanelView === 'add_service') {
         const response = await instanceApi.createRootInstance({
           serviceName: formData.name.trim(),
-          type: formData.type,
         });
         toast.success(response.message || 'Service created successfully');
         await fetchInstances();
@@ -214,7 +197,6 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
       } else if (leftPanelView === 'edit_service') {
         const response = await instanceApi.updateRootInstance(formData.id, {
           serviceName: formData.name.trim(),
-          type: formData.type,
         });
         toast.success(response.message || 'Service updated successfully');
         await fetchInstances();
@@ -232,10 +214,17 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
     }
   }, [formData, leftPanelView, validateServiceName, fetchInstances, onSuccess]);
 
-  const handleDeleteService = useCallback(async (instance: RootInstance) => {
-    if (!window.confirm(`Delete service "${instance.serviceName}" and all its folders? This action cannot be undone.`)) {
-      return;
-    }
+  const handleDeleteService = useCallback((instance: RootInstance) => {
+    setConfirmDelete({
+      open: true,
+      type: 'service',
+      item: instance,
+    });
+  }, []);
+  
+  const handleConfirmDeleteService = useCallback(async () => {
+    const instance = confirmDelete.item as RootInstance;
+    if (!instance) return;
     
     try {
       setActionLoading(true);
@@ -247,6 +236,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
         setSelectedInstanceId(null);
       }
       
+      setConfirmDelete({ open: false, type: 'service', item: null });
       onSuccess?.();
     } catch (error: any) {
       console.error('Delete service failed:', error);
@@ -255,7 +245,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
     } finally {
       setActionLoading(false);
     }
-  }, [selectedInstanceId, fetchInstances, onSuccess]);
+  }, [confirmDelete.item, selectedInstanceId, fetchInstances, onSuccess]);
   
   const handleSaveSub = useCallback(async (name: string) => {
     const error = validateFolderName(name);
@@ -277,7 +267,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
         const response = await instanceApi.createSubInstance(selectedInstanceId, {
           name: name.trim(),
         });
-        toast.success(response.message || 'Folder created successfully');
+        toast.success(response.message || 'Sub-instance created successfully');
         await fetchSubInstances(selectedInstanceId);
         setAddingSub(false);
       } else if (editingSub) {
@@ -286,7 +276,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
           editingSub.id,
           { name: name.trim() }
         );
-        toast.success(response.message || 'Folder updated successfully');
+        toast.success(response.message || 'Sub-instance updated successfully');
         await fetchSubInstances(selectedInstanceId);
         setEditingSub(null);
       }
@@ -303,27 +293,33 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
     }
   }, [selectedInstanceId, addingSub, editingSub, validateFolderName, fetchSubInstances, onSuccess]);
 
-  const handleDeleteSub = useCallback(async (sub: SubInstance) => {
-    if (!window.confirm(`Delete folder "${sub.name}"? This will also delete all credentials in this folder.`)) {
-      return;
-    }
-    
-    if (!selectedInstanceId) return;
+  const handleDeleteSub = useCallback((sub: SubInstance) => {
+    setConfirmDelete({
+      open: true,
+      type: 'subinstance',
+      item: sub,
+    });
+  }, []);
+  
+  const handleConfirmDeleteSub = useCallback(async () => {
+    const sub = confirmDelete.item as SubInstance;
+    if (!sub || !selectedInstanceId) return;
     
     try {
       setActionLoading(true);
       const response = await instanceApi.deleteSubInstance(selectedInstanceId, sub.subInstanceId);
-      toast.success(response.message || 'Folder deleted successfully');
+      toast.success(response.message || 'Sub-instance deleted successfully');
       await fetchSubInstances(selectedInstanceId);
+      setConfirmDelete({ open: false, type: 'subinstance', item: null });
       onSuccess?.();
     } catch (error: any) {
-      console.error('Delete folder failed:', error);
+      console.error('Delete sub-instance failed:', error);
       const errorData = error.response?.data;
-      toast.error(errorData?.message || 'Failed to delete folder');
+      toast.error(errorData?.message || 'Failed to delete sub-instance');
     } finally {
       setActionLoading(false);
     }
-  }, [selectedInstanceId, fetchSubInstances, onSuccess]);
+  }, [confirmDelete.item, selectedInstanceId, fetchSubInstances, onSuccess]);
 
   // ==================== MEMOIZED VALUES ====================
   const selectedInstance = useMemo(() => 
@@ -367,7 +363,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
                 setFolderError('');
               }}
               onKeyDown={handleKeyPress}
-              placeholder="Enter folder name"
+              placeholder="Enter sub-instance name"
               className={`w-full px-2 py-1.5 text-sm rounded border ${
                 folderError ? 'border-red-500 focus:ring-red-500' : 'border-indigo-400 focus:ring-indigo-500'
               } bg-white dark:bg-gray-700 focus:ring-2 focus:outline-none transition-all`}
@@ -413,7 +409,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
                 onClick={() => setEditingSub({ id: sub.subInstanceId, name: sub.name })}
                 disabled={actionLoading}
                 className="p-1.5 rounded-md text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors" 
-                title="Edit folder"
+                title="Edit sub-instance"
               >
                 <IoCreateOutline className="w-4 h-4" />
               </button>
@@ -421,7 +417,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
                 onClick={onDelete}
                 disabled={actionLoading}
                 className="p-1.5 rounded-md text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors" 
-                title="Delete folder"
+                title="Delete sub-instance"
               >
                 <IoTrashOutline className="w-4 h-4" />
               </button>
@@ -461,7 +457,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
               setFolderError('');
             }}
             onKeyDown={handleKeyPress}
-            placeholder="Enter folder name..." 
+            placeholder="Enter sub-instance name..." 
             className={`flex-1 px-2 sm:px-3 py-1.5 text-sm rounded border ${
               folderError ? 'border-red-500 focus:ring-red-500' : 'border-indigo-300 focus:ring-indigo-500'
             } bg-white dark:bg-gray-700 focus:ring-2 focus:outline-none transition-all`}
@@ -472,7 +468,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
             onClick={() => name.trim() && onSave(name)}
             disabled={actionLoading || !name.trim()}
             className="p-1.5 sm:p-2 rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0" 
-            title="Save folder"
+            title="Save sub-instance"
           >
             {actionLoading ? <CircularProgress size={16} color="inherit" /> : <IoSaveOutline className="w-4 h-4" />}
           </button>
@@ -525,31 +521,12 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
             )}
           </div>
           
-          <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Category <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <select 
-                value={formData.type} 
-                onChange={e => setFormData(d => ({ ...d, type: e.target.value }))}
-                disabled={actionLoading}
-                className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 appearance-none focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all disabled:opacity-50"
-              >
-                {SERVICE_TYPES.map(type => (
-                  <option key={type.value} value={type.value}>{type.label}</option>
-                ))}
-              </select>
-              <IoChevronDownOutline className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-gray-400 w-3 h-3 sm:w-4 sm:h-4 pointer-events-none" />
-            </div>
-          </div>
-          
           <div className="flex justify-end gap-1.5 sm:gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
             <button 
               onClick={() => {
                 setLeftPanelView('list');
                 setServiceError('');
-                setFormData({ id: '', name: '', type: 'cloud' });
+                setFormData({ id: '', name: '' });
               }}
               disabled={actionLoading}
               className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 font-medium text-xs sm:text-sm transition-colors disabled:opacity-50"
@@ -596,7 +573,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
             <button 
               onClick={() => {
                 setLeftPanelView('add_service');
-                setFormData({ id: '', name: '', type: 'cloud' });
+                setFormData({ id: '', name: '' });
                 setServiceError('');
               }}
               className="p-2 sm:p-2.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors flex-shrink-0 shadow-sm" 
@@ -624,13 +601,12 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
                     : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'
                 }`}
               >
-                <ServiceTypeIcon type={instance.type} />
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-xs sm:text-sm text-gray-800 dark:text-white break-words line-clamp-2">
                     {instance.serviceName}
                   </p>
                   <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    {instance.subInstances?.length || 0} folder{instance.subInstances?.length !== 1 ? 's' : ''}
+                    {instance.subInstances?.length || 0} sub-instance{instance.subInstances?.length !== 1 ? 's' : ''}
                   </p>
                 </div>
               </button>
@@ -661,7 +637,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
             Select a Service
           </p>
           <p className="text-xs sm:text-sm text-gray-500 max-w-xs break-words">
-            Choose a service from the left panel to view and manage its folders
+            Choose a service from the left panel to view and manage its sub-instances
           </p>
         </div>
       );
@@ -680,12 +656,9 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
                 <IoArrowBackOutline className="w-5 h-5" />
               </button>
               <div className="min-w-0 flex-1">
-                <h2 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 dark:text-white mb-1 break-words line-clamp-2">
+                <h2 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 dark:text-white break-words line-clamp-2">
                   {selectedInstance.serviceName}
                 </h2>
-                <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-full capitalize inline-block">
-                  {selectedInstance.type}
-                </span>
               </div>
             </div>
             
@@ -696,7 +669,6 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
                   setFormData({
                     id: selectedInstance.rootInstanceId,
                     name: selectedInstance.serviceName,
-                    type: selectedInstance.type
                   });
                   setServiceError('');
                 }}
@@ -724,7 +696,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
             }}
             disabled={actionLoading}
             className="w-full flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:py-2 rounded-lg bg-indigo-600 text-white text-xs sm:text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm" 
-            title="Add new folder"
+            title="Add new sub-instance"
           >
             <IoAddCircleOutline className="w-4 h-4 sm:w-5 sm:h-5" /> 
             <span>Add  subinstance</span>
@@ -754,7 +726,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
           {!addingSub && (!selectedInstance.subInstances || selectedInstance.subInstances.length === 0) && (
             <div className="text-center py-12 sm:py-16 px-3">
               <IoFolderOpenOutline className="w-12 h-12 sm:w-14 sm:h-14 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-              <p className="text-gray-500 text-xs sm:text-sm mb-2 font-medium break-words">No folders in this service yet</p>
+              <p className="text-gray-500 text-xs sm:text-sm mb-2 font-medium break-words">No subinstance  in this service yet</p>
               <button 
                 onClick={() => {
                   setAddingSub(true);
@@ -762,7 +734,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
                 }}
                 className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium underline transition-colors"
               >
-                Create your first folder
+                Create first subinstance 
               </button>
             </div>
           )}
@@ -773,28 +745,47 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
 
   // ==================== MAIN RENDER ====================
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Manage Services & Folders"
-      subtitle="Organize your credentials by services and associated folders"
-      maxWidth="2xl"
-    >
-      <div className="flex flex-col md:flex-row border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 h-[70vh] sm:h-[65vh] max-h-[600px] overflow-hidden shadow-xl">
-        <div className={`
-          ${selectedInstanceId ? 'hidden md:flex' : 'flex'} 
-          w-full md:w-1/3 border-r border-gray-200 dark:border-gray-700 flex-col bg-gray-50 dark:bg-gray-800/50
-        `}>
-          {renderLeftPanel()}
-        </div>
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title="Manage Services & Folders"
+        subtitle="Organize your credentials by services and associated folders"
+        maxWidth="2xl"
+      >
+        <div className="flex flex-col md:flex-row border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 h-[70vh] sm:h-[65vh] max-h-[600px] overflow-hidden shadow-xl">
+          <div className={`
+            ${selectedInstanceId ? 'hidden md:flex' : 'flex'} 
+            w-full md:w-1/3 border-r border-gray-200 dark:border-gray-700 flex-col bg-gray-50 dark:bg-gray-800/50
+          `}>
+            {renderLeftPanel()}
+          </div>
 
-        <div className={`
-          ${selectedInstanceId ? 'flex' : 'hidden md:flex'}
-          w-full md:w-2/3 flex-col bg-white dark:bg-gray-900
-        `}>
-          {renderRightPanel()}
+          <div className={`
+            ${selectedInstanceId ? 'flex' : 'hidden md:flex'}
+            w-full md:w-2/3 flex-col bg-white dark:bg-gray-900
+          `}>
+            {renderRightPanel()}
+          </div>
         </div>
-      </div>
-    </Modal>
+      </Modal>
+      
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        isOpen={confirmDelete.open}
+        onClose={() => setConfirmDelete({ open: false, type: 'service', item: null })}
+        onConfirm={confirmDelete.type === 'service' ? handleConfirmDeleteService : handleConfirmDeleteSub}
+        title={confirmDelete.type === 'service' ? 'Delete Service?' : 'Delete Sub-Instance?'}
+        message={
+          confirmDelete.type === 'service'
+            ? `Delete service "${(confirmDelete.item as RootInstance)?.serviceName}" and all its sub-instances? This action cannot be undone.`
+            : `Delete sub-instance "${(confirmDelete.item as SubInstance)?.name}"? This will also delete all credentials in this sub-instance.`
+        }
+        confirmText="Delete"
+        cancelText="Cancel"
+        confirmButtonClass="bg-red-600 hover:bg-red-700"
+        isLoading={actionLoading}
+      />
+    </>
   );
 };

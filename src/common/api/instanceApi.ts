@@ -11,19 +11,16 @@ export interface SubInstance {
 export interface RootInstance {
   rootInstanceId: string;
   serviceName: string;
-  type: string;
   createdAt: string;
   subInstances?: SubInstance[];
 }
 
 export interface CreateRootInstanceData {
   serviceName: string;
-  type: string;
 }
 
 export interface UpdateRootInstanceData {
   serviceName?: string;
-  type?: string;
 }
 
 export interface CreateSubInstanceData {
@@ -40,7 +37,6 @@ interface CreateInstanceResponse {
   data: {
     id: string;
     serviceName: string;
-    type: string;
     subInstancesCount: number;
     createdAt: string;
     isNew: boolean;
@@ -64,7 +60,6 @@ interface UpdateInstanceResponse {
   data: {
     id: string;
     serviceName: string;
-    type: string;
     createdAt: string;
   };
   message: string;
@@ -98,7 +93,6 @@ interface ListSubInstancesResponse {
   rootInstance: {
     id: string;
     serviceName: string;
-    type: string;
     createdBy: {
       id: string;
       name: string;
@@ -227,7 +221,7 @@ export const instanceApi = {
   // ==================== SUB-INSTANCE OPERATIONS ====================
 
   /**
-   * Create a new sub-instance (folder) under a root instance
+   * Create a new sub-instance under a root instance
    * POST /api/instances/{instanceId}/sub-instances
    */
   createSubInstance: async (
@@ -255,7 +249,7 @@ export const instanceApi = {
   },
 
   /**
-   * Update a sub-instance (folder)
+   * Update a sub-instance
    * PUT /api/instances/{instanceId}/sub-instances/{subId}
    */
   updateSubInstance: async (
@@ -271,7 +265,7 @@ export const instanceApi = {
   },
 
   /**
-   * Delete a sub-instance (folder) and all related credentials
+   * Delete a sub-instance and all related credentials
    * DELETE /api/instances/{instanceId}/sub-instances/{subId}
    */
   deleteSubInstance: async (

@@ -73,7 +73,7 @@ const AdminDashboard: React.FC = () => {
       setSearchError('');
       const response = await adminApi.getAllUsers(1, 100);
       const unverifiedUsers = response.data.users
-        .filter((user: any) => !user.isVerified)
+        .filter((user: any) => !user.isVerified && user.isActive !== false)
         .map((user: any) => ({
           id: user._id,
           name: user.name,
@@ -81,6 +81,7 @@ const AdminDashboard: React.FC = () => {
           role: user.role,
           status: 'pending' as const,
           isVerified: user.isVerified,
+          isActive: user.isActive,
           createdAt: user.createdAt,
           lastLogin: user.lastLogin,
         }));
@@ -110,6 +111,7 @@ const AdminDashboard: React.FC = () => {
       const filtered = response.data.users
         .filter((user: any) => 
           !user.isVerified && 
+          user.isActive !== false &&
           (user.name.toLowerCase().includes(query.toLowerCase()) || 
            user.email.toLowerCase().includes(query.toLowerCase()))
         )
@@ -120,6 +122,7 @@ const AdminDashboard: React.FC = () => {
           role: user.role,
           status: 'pending' as const,
           isVerified: user.isVerified,
+          isActive: user.isActive,
           createdAt: user.createdAt,
           lastLogin: user.lastLogin,
         }));
@@ -206,14 +209,13 @@ const AdminDashboard: React.FC = () => {
         limit: paginationModel.pageSize,
       });
 
-      const logsWithServiceType = response.data.auditLogs.map((log: any) => ({
+      const logsWithId = response.data.auditLogs.map((log: any) => ({
         ...log,
         id: log._id,
         serviceName: log.serviceName || 'Unknown',
-        serviceType: log.credential?.rootInstance?.type || 'other',
       }));
 
-      setAuditLogs(logsWithServiceType);
+      setAuditLogs(logsWithId);
       setRowCount(response.pagination.total);
     } catch (error: any) {
       // console.error('Failed to fetch audit logs:', error);
@@ -457,7 +459,7 @@ const AdminDashboard: React.FC = () => {
 
       {/* User Approval Modal */}
       {showApprovalModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm">
           <ActionCard
             title="Approve Pending Users"
             mode="approve"

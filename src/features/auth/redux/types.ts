@@ -4,6 +4,7 @@ export interface User {
   email: string;
   role?: string;
   isVerified?: boolean;
+  isActive?: boolean;
   lastLogin?: Date;
 }
 
@@ -12,6 +13,7 @@ export interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   isVerified: boolean;
+  isActive: boolean;
   loading: boolean;
   error: string | null;
 }

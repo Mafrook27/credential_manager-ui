@@ -7,6 +7,7 @@ interface BackendUser {
   email: string;
   role: "user" | "admin";
   isVerified: boolean;
+  isActive: boolean;
   createdAt: string;
   updatedAt?: string;
   lastLogin?: string;
@@ -144,10 +145,18 @@ export const adminApi = {
     return response.data;
   },
 
-  // Block user (disapprove)
+  // Block user (disable)
   blockUser: async (userId: string) => {
     const response = await axiosInstance.get(
       `/admin/users/block/${userId}`
+    );
+    return response.data;
+  },
+
+  // Unblock user (enable)
+  unblockUser: async (userId: string) => {
+    const response = await axiosInstance.get(
+      `/admin/users/unblock/${userId}`
     );
     return response.data;
   },

@@ -3,8 +3,8 @@
 
 import {type GridColDef,type GridRenderCellParams } from '@mui/x-data-grid';
 import { MdAdd, MdLock, MdShare, MdVisibility, MdEdit, MdDelete } from 'react-icons/md';
-import { ACTION_CONFIG, SERVICE_CONFIG } from '../../constants/audit.constants';
-import type { AuditAction, ServiceType } from '../../types/audit.types';
+import { ACTION_CONFIG } from '../../constants/audit.constants';
+import type { AuditAction } from '../../types/audit.types';
 
 const getActionIcon = (action: string) => {
   const icons: any = {
@@ -101,13 +101,6 @@ export const getAuditTableColumns = (): GridColDef[] => [
       const serviceName = params.row.serviceName || 'Unknown';
       // Use subInstanceName stored directly in audit log (for historical tracking even after deletion)
       const subInstanceName = params.row.subInstanceName || params.row.credential?.subInstance?.name || 'N/A';
-      const serviceType = params.row.serviceType || 'other';
-      
-      const serviceConfig = SERVICE_CONFIG[serviceType as ServiceType] ?? {
-        bg: '#e5e7eb',
-        text: '#6b7280',
-        label: serviceType,
-      };
       
       return (
         <div className="d-flex flex-column" style={{ padding: '8px 0', gap: '6px' }}>
@@ -115,18 +108,6 @@ export const getAuditTableColumns = (): GridColDef[] => [
             {serviceName}
           </span>
           <div className="d-flex gap-2 align-items-center flex-wrap">
-            <span
-              className="badge"
-              style={{
-                backgroundColor: serviceConfig.bg,
-                color: serviceConfig.text,
-                fontSize: '0.7rem',
-                padding: '2px 8px',
-                fontWeight: '600',
-              }}
-            >
-              {serviceConfig.label}
-            </span>
             <span
               className="badge"
               style={{

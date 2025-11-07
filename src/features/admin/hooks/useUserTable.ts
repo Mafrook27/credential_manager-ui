@@ -164,16 +164,21 @@ export const useUserTable = () => {
       
       if (!selectedUser?.id) return;
       
-      await adminApi.blockUser(selectedUser.id);
-      
-      toast.success('User disabled successfully!');
+      // Toggle between block and unblock based on current isActive status
+      if (selectedUser.isActive !== false) {
+        await adminApi.blockUser(selectedUser.id);
+        toast.success('User blocked successfully!');
+      } else {
+        await adminApi.unblockUser(selectedUser.id);
+        toast.success('User unblocked successfully!');
+      }
       
       setIsBlockModalOpen(false);
       setSelectedUser(null);
       setRefreshTrigger(prev => prev + 1);
     } catch (error) {
       const err = error as AxiosError<{ message?: string }>;
-      toast.error(err.response?.data?.message || 'Failed to disable user');
+      toast.error(err.response?.data?.message || 'Failed to update user status');
     } finally {
       setIsLoading(false);
     }

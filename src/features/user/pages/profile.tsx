@@ -164,7 +164,7 @@ export const Profile: React.FC = () => {
     );
   }
 
-  if (!user) return <div className="text-center py-12 text-gray-600">No profile data</div>;
+  if (!user) return <div className="text-center py-12 text-gray-600"></div>;
 
   const initials = user.name
     .split(' ')

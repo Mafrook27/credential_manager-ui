@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, Link, useLocation, useSearchParams } from 'react-router-dom';
 import { Button, Alert, Box } from '@mui/material';
 import { Email, Lock } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
-import { login,getUserProfile } from '../redux/actions';
+import { login } from '../redux/actions';
 import Input from '../../../common/components/Input';
 import type { LoginCredentials } from '../redux/types';
 import { useTheme } from '@mui/material/styles';
-
+import { getDefaultDashboard } from '../../../common/utils/auth.uitls';
+import { showSessionExpiredMessage } from '../../../utils/sessionExpiry';
 interface FieldErrors {
   email?: string;
   password?: string;
@@ -23,20 +24,33 @@ function LoginForm() {
   const location = useLocation();
   const dispatch = useDispatch();
   const theme = useTheme();
+  const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState<LoginCredentials>({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [generalError, setGeneralError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [sessionExpiredMessage, setSessionExpiredMessage] = useState('');
   const [touched, setTouched] = useState<TouchedFields>({});
 
   useEffect(() => {
+    // Check for session expired message
+    const expiredMsg = showSessionExpiredMessage();
+    if (expiredMsg) {
+      setSessionExpiredMessage(expiredMsg);
+      // Clear the expired param from URL
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('expired');
+      navigate({ search: newParams.toString() }, { replace: true });
+    }
+
+    // Check for success message from navigation state
     if (location.state?.message) {
       setSuccessMessage(location.state.message);
       window.history.replaceState({}, document.title);
     }
-  }, [location]);
+  }, [location, searchParams, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -107,12 +121,18 @@ function LoginForm() {
 
     setLoading(true);
     try {
-const result = await dispatch(login(formData) as any);
+      const result = await dispatch(login(formData) as any);
+      
+      // Validate login response
+      if (!result?.data?.user) {
+        throw new Error('Invalid login response');
+      }
 
-    if (result?.payload?.data?.user?._id) {
-      await dispatch(getUserProfile(result.payload.data.user._id) as any);
-    }
-      navigate('/dashboard');
+      // Navigate to appropriate dashboard based on user role
+      const userRole = result.data.user.role;
+      const dashboardPath = getDefaultDashboard(userRole);
+      
+      navigate(dashboardPath, { replace: true });
     } catch (err: any) {
       if (err.response?.data?.errors) {
         const errors: FieldErrors = {};
@@ -138,6 +158,12 @@ const result = await dispatch(login(formData) as any);
       <p className="text-center text-muted mb-3" style={{ fontSize: '0.9rem' }}>
         Please login to access your vault.
       </p>
+
+      {sessionExpiredMessage && (
+        <Alert severity="warning" onClose={() => setSessionExpiredMessage('')} sx={{ py: 1, mb: 2, fontSize: '0.875rem' }}>
+          {sessionExpiredMessage}
+        </Alert>
+      )}
 
       {successMessage && (
         <Alert severity="success" onClose={() => setSuccessMessage('')} sx={{ py: 1, mb: 2, fontSize: '0.875rem' }}>

@@ -13,6 +13,7 @@ export interface User {
   role: UserRole;
   status: UserStatus;
   isVerified?: boolean;
+  isActive?: boolean;
   createdAt?: string;
   lastLogin?: string;
 }

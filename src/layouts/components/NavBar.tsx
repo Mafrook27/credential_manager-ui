@@ -53,7 +53,7 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 shadow-sm z-50">
+    <nav className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 shadow-sm z-40">
       <div className="flex items-center justify-between px-4 py-3">
         {/* LEFT SECTION - Sidebar Toggle + Logo + App Name */}
         <div className="flex items-center gap-3">
@@ -70,7 +70,7 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
           <div className="flex items-center gap-2">
             <IoShieldCheckmark className="text-3xl" style={{ color: theme.palette.primary.main }} />
             <span className="hidden sm:inline font-bold text-lg text-gray-900">
-              CredentialVault
+              SparkLMS
             </span>
           </div>
         </div>

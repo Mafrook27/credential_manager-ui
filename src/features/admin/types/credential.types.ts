@@ -6,7 +6,6 @@
 export interface RootInstance {
   _id: string;
   serviceName: string;
-  type: 'cloud' | 'banking' | 'development' | 'design' | 'social' | 'payment' | 'personal' | 'work' | 'email' | 'other';
 }
 
 /**

@@ -62,7 +62,7 @@ const DashboardLayout: React.FC = () => {
           onClose={() => setSidebarOpen(false)}
         />
 
-        <main className="pt-4 mt-4">
+        <main className="pt-4 mt-5">
           <Outlet />  {/* Child routes will render here */}
         </main>
       </div>

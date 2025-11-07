@@ -6,6 +6,7 @@ const initialState: AuthState = {
   token: null, // Backend uses HTTP-only cookies, no token in localStorage
   isAuthenticated: false, // Will be determined by API calls
   isVerified: false,
+  isActive: true,
   loading: false,
   error: null,
 };
@@ -51,6 +52,7 @@ const authReducer = (state = initialState, action: AuthAction): AuthState => {
           token: null, // No token needed with cookie auth
           isAuthenticated: true,
           isVerified: successPayload.data.user?.isVerified ?? false,
+          isActive: successPayload.data.user?.isActive ?? true,
           loading: false,
           error: null,
         };
@@ -68,6 +70,7 @@ const authReducer = (state = initialState, action: AuthAction): AuthState => {
         error: typeof action.payload === 'string' ? action.payload : null,
         isAuthenticated: false, // Set to false on auth failures
         isVerified: false,
+        isActive: true,
       };
 
     case types.RESET_PASSWORD_SUCCESS:
@@ -86,6 +89,7 @@ const authReducer = (state = initialState, action: AuthAction): AuthState => {
         token: null,
         isAuthenticated: false,
         isVerified: false,
+        isActive: true,
         loading: false,
         error: null,
       };

@@ -62,6 +62,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       maxWidth="sm"
       closeOnBackdrop={!loading}
       closeOnEscape={!loading}
+      zIndex={2000}
       footer={
         <div className="flex items-center justify-end gap-3">
           <button

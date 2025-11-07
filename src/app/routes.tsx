@@ -61,7 +61,7 @@ const AppRoutes: React.FC = () => {
         </Routes>
       </Suspense>
 
-      <ToastContainer limit={2}/>
+      <ToastContainer limit={2} style={{ zIndex: 3000 }} />
     </>
   );
 };

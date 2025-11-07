@@ -10,6 +10,7 @@ export interface ModalProps {
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showCloseButton?: boolean;
+  zIndex?: number;
 }
 
 /**
@@ -23,6 +24,7 @@ export const Modal: React.FC<ModalProps> = ({
   children,
   size = 'md',
   showCloseButton = true,
+  zIndex = 1000,
 }) => {
   if (!isOpen) return null;
 
@@ -47,7 +49,8 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4"
+      style={{ zIndex }}
       onClick={handleBackdropClick}
     >
       <div
