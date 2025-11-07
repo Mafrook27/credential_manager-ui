@@ -6,7 +6,7 @@ function LoginPage() {
   return (
     <AuthLayout 
       image="/login.svg"
-      title="Secure Your Digital Life"
+      title="Credential Manager"
       subtitle="Manage all your passwords in one secure place."
     >
       <LoginForm />

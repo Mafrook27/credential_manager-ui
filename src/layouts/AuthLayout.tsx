@@ -45,7 +45,7 @@ function AuthLayout({ children, image, title, subtitle }: AuthLayoutProps) {
 
             {/* Text - STATIC */}
             <h2 style={{ fontWeight: 'bold', marginBottom: '1rem' }}>
-              {title || 'Secure Your Digital Life'}
+              {title || 'Credential Manager'}
             </h2>
             <p style={{ fontSize: '1.125rem', opacity: 0.75 }}>
               {subtitle || 'Manage all your passwords in one secure place.'}
