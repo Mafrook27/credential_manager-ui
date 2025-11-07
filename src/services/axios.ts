@@ -155,6 +155,21 @@ axiosInstance.interceptors.response.use(
       console.error('🚫 Access Denied:', errorData.message);
     }
 
+    // Sanitize error messages for production
+    if (!import.meta.env.DEV && error.response?.status === 500) {
+      // Replace technical error messages with user-friendly ones
+      const errorData = error.response.data as any;
+      if (errorData?.message?.includes('Cannot find module') || 
+          errorData?.message?.includes('Error:') ||
+          errorData?.message?.includes('Require stack')) {
+        error.response.data = {
+          ...errorData,
+          message: 'A server error occurred. Please try again later.',
+          code: 'SERVER_ERROR'
+        };
+      }
+    }
+
     return Promise.reject(error);
   }
 );

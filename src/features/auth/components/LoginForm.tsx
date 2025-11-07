@@ -134,6 +134,9 @@ function LoginForm() {
       
       navigate(dashboardPath, { replace: true });
     } catch (err: any) {
+      console.error('Login error:', err);
+      
+      // Handle field-specific validation errors
       if (err.response?.data?.errors) {
         const errors: FieldErrors = {};
         err.response.data.errors.forEach((error: any) => {
@@ -142,10 +145,24 @@ function LoginForm() {
           }
         });
         setFieldErrors(errors);
-      } else if (err.response?.data?.message) {
+      } 
+      // Handle API error messages
+      else if (err.response?.data?.message) {
         setGeneralError(err.response.data.message);
-      } else {
-        setGeneralError('Login failed. Please try again.');
+      } 
+      // Handle network/server errors with user-friendly messages
+      else if (err.message?.includes('Network Error') || err.code === 'ERR_NETWORK') {
+        setGeneralError('Unable to connect to server. Please check your internet connection.');
+      }
+      else if (err.response?.status === 500) {
+        setGeneralError('Server error. Please try again later or contact support.');
+      }
+      else if (err.response?.status === 503) {
+        setGeneralError('Service temporarily unavailable. Please try again in a few moments.');
+      }
+      // Generic fallback
+      else {
+        setGeneralError('Login failed. Please check your credentials and try again.');
       }
     } finally {
       setLoading(false);
