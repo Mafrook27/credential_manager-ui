@@ -4,6 +4,7 @@ import { useDispatch } from 'react-redux';
 import { useAuth } from '../hooks/useAuth';
 import { logout } from '../../features/auth/redux/actions';
 import GlobalLoader from './GlobalLoader';
+import type { AppDispatch } from '../../app/store';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -18,7 +19,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAdmin = false 
 }) => {
   const { isAuthenticated, isVerified, isActive, isAdmin, loading, user } = useAuth();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const hasShownAlert = useRef(false);
   const hasShownBlockedAlert = useRef(false);
 
