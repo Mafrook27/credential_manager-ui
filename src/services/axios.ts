@@ -141,10 +141,23 @@ axiosInstance.interceptors.response.use(
         }
       }
 
-      // Handle other 401 errors (NO_TOKEN, SESSION_EXPIRED, etc.)
-      if (errorData.code === 'SESSION_EXPIRED' || errorData.code === 'NO_TOKEN' || errorData.code === 'INVALID_TOKEN') {
+      // Handle other 401 errors (NO_TOKEN, SESSION_EXPIRED, SESSION_INACTIVE, etc.)
+      if (errorData.code === 'SESSION_EXPIRED' || 
+          errorData.code === 'SESSION_INACTIVE' || 
+          errorData.code === 'NO_TOKEN' || 
+          errorData.code === 'INVALID_TOKEN') {
+        console.warn(`🚨 Session error detected: ${errorData.code}`);
+        
+        // Check if logged in from another device
+        const isLoggedInElsewhere = errorData.code === 'SESSION_INACTIVE' || 
+                                    errorData.message?.toLowerCase().includes('another device');
+        
         // Force logout and redirect
-        forceLogout(`Session invalid: ${errorData.code}`);
+        if (isLoggedInElsewhere) {
+          forceLogout('Logged in from another device');
+        } else {
+          forceLogout(`Session invalid: ${errorData.code}`);
+        }
         return Promise.reject(error);
       }
     }

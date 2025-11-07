@@ -16,7 +16,7 @@ interface SessionConfig {
 
 const DEFAULT_CONFIG: SessionConfig = {
   refreshBeforeExpiry: 60 * 1000, // 1 minute before expiry
-  checkInterval: 60 * 1000, // Check every minute
+  checkInterval: 2 * 60 * 1000, // Check every 2 minutes (only for idle users)
   activityBasedRefresh: true,
 };
 
@@ -66,6 +66,8 @@ class SessionMonitor {
 
   /**
    * Setup activity listeners to track user interaction
+   * Note: Session validation happens automatically on every API call via axios interceptor
+   * This just tracks activity timestamp
    */
   private setupActivityListeners(): void {
     if (!this.config.activityBasedRefresh) return;
@@ -83,22 +85,24 @@ class SessionMonitor {
 
   /**
    * Check if token needs refresh and perform refresh
+   * This only runs for idle users (every 2 minutes)
+   * Active users get instant validation on every API call via axios interceptor
    */
   private async checkAndRefresh(): Promise<void> {
     if (!this.isActive) return;
 
     try {
-      // In a real implementation, you would check token expiry time
-      // For now, we rely on the backend's automatic refresh mechanism
-      // This is just a placeholder for future enhancements
-
-      // You could store token expiry time in localStorage and check it here
-      // const tokenExpiry = localStorage.getItem('tokenExpiry');
-      // if (tokenExpiry && Date.now() > parseInt(tokenExpiry) - this.config.refreshBeforeExpiry) {
-      //   await refreshToken();
-      // }
-    } catch (error) {
-      console.error('❌ Session refresh failed:', error);
+      // Check if session is still valid by calling refresh endpoint
+      // This catches idle users who haven't made any API calls
+      console.log('🔍 Periodic session check for idle user...');
+      await refreshToken();
+      console.log('✅ Session is valid');
+    } catch (error: any) {
+      // Session is invalid - user will be logged out by axios interceptor
+      console.error('❌ Session check failed:', error?.response?.data?.message || error.message);
+      
+      // Stop monitoring since session is invalid
+      this.stop();
     }
   }
 
