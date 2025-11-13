@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { adminApi } from '../api/adminApi';
 import { toast } from '../../../common/utils/toast';
-import { getErrorMessage } from '../../../common/utils/errorHandler';
+import { getErrorMessage } from '../../../utils/errorHandler';
 import { IoSearch, IoChevronForward, IoChevronDown } from 'react-icons/io5';
 
 // Types based on backend response
@@ -110,6 +110,7 @@ export const AccessControlPage: React.FC = () => {
 
   // Get unique root and sub instances for filters
   const [rootInstances, setRootInstances] = useState<string[]>([]);
+  const [allSubInstances, setAllSubInstances] = useState<Map<string, string[]>>(new Map());
   const [subInstances, setSubInstances] = useState<string[]>([]);
 
   useEffect(() => {
@@ -137,25 +138,47 @@ export const AccessControlPage: React.FC = () => {
       setTotalUsers(response.pagination.totalUsers);
       setCurrentPage(response.pagination.page);
 
-      // Extract unique root and sub instances
+      // Extract unique root and sub instances with mapping
       const roots = new Set<string>();
-      const subs = new Set<string>();
+      const rootToSubsMap = new Map<string, Set<string>>();
       
       response.data.users.forEach((user: UserAccess) => {
         user.myInstances?.forEach((instance) => {
           roots.add(instance.rootName);
+          if (!rootToSubsMap.has(instance.rootName)) {
+            rootToSubsMap.set(instance.rootName, new Set<string>());
+          }
           instance.subInstances?.forEach((sub) => {
-            subs.add(sub.subName);
+            rootToSubsMap.get(instance.rootName)?.add(sub.subName);
           });
         });
         user.sharedAccess?.forEach((access) => {
           roots.add(access.rootInstance.rootName);
-          subs.add(access.subInstance.subName);
+          if (!rootToSubsMap.has(access.rootInstance.rootName)) {
+            rootToSubsMap.set(access.rootInstance.rootName, new Set<string>());
+          }
+          rootToSubsMap.get(access.rootInstance.rootName)?.add(access.subInstance.subName);
         });
       });
 
       setRootInstances(Array.from(roots).sort());
-      setSubInstances(Array.from(subs).sort());
+      
+      // Convert Map<string, Set<string>> to Map<string, string[]>
+      const subsMap = new Map<string, string[]>();
+      rootToSubsMap.forEach((subs, root) => {
+        subsMap.set(root, Array.from(subs).sort());
+      });
+      setAllSubInstances(subsMap);
+      
+      // Update sub instances based on current root filter
+      if (rootFilter && subsMap.has(rootFilter)) {
+        setSubInstances(subsMap.get(rootFilter) || []);
+      } else {
+        // Show all subs if no root filter
+        const allSubs = new Set<string>();
+        subsMap.forEach((subs) => subs.forEach((sub) => allSubs.add(sub)));
+        setSubInstances(Array.from(allSubs).sort());
+      }
     } catch (err) {
       const errorMessage = getErrorMessage(err, 'Failed to fetch user access');
       setError(errorMessage);
@@ -226,7 +249,21 @@ export const AccessControlPage: React.FC = () => {
             <select
               className="h-[44px] w-full appearance-none rounded border border-gray-300 bg-transparent pl-4 pr-10 focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
               value={rootFilter}
-              onChange={(e) => setRootFilter(e.target.value)}
+              onChange={(e) => {
+                const newRoot = e.target.value;
+                setRootFilter(newRoot);
+                // Reset sub filter when root changes
+                setSubFilter('');
+                // Update available sub instances
+                if (newRoot && allSubInstances.has(newRoot)) {
+                  setSubInstances(allSubInstances.get(newRoot) || []);
+                } else {
+                  // Show all subs if no root filter
+                  const allSubs = new Set<string>();
+                  allSubInstances.forEach((subs) => subs.forEach((sub) => allSubs.add(sub)));
+                  setSubInstances(Array.from(allSubs).sort());
+                }
+              }}
             >
               <option value="">Root Instance: All</option>
               {rootInstances.map((root) => (
@@ -241,9 +278,10 @@ export const AccessControlPage: React.FC = () => {
           {/* Sub Instance Dropdown */}
           <div className="relative w-full sm:w-auto md:w-[240px]">
             <select
-              className="h-[44px] w-full appearance-none rounded border border-gray-300 bg-transparent pl-4 pr-10 focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+              className="h-[44px] w-full appearance-none rounded border border-gray-300 bg-transparent pl-4 pr-10 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
               value={subFilter}
               onChange={(e) => setSubFilter(e.target.value)}
+              disabled={!rootFilter}
             >
               <option value="">Sub Instance: All</option>
               {subInstances.map((sub) => (

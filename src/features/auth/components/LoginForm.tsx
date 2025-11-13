@@ -121,7 +121,12 @@ function LoginForm() {
 
     setLoading(true);
     try {
-      const result = await dispatch(login(formData) as any);
+      // Normalize email before sending to backend
+      const normalizedData = {
+        ...formData,
+        email: formData.email.toLowerCase().trim()
+      };
+      const result = await dispatch(login(normalizedData) as any);
       
       // Validate login response
       if (!result?.data?.user) {

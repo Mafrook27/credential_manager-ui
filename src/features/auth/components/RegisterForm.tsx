@@ -104,7 +104,12 @@ function RegisterForm() {
     setGeneralError('');
 
     try {
-      await dispatch(register(formData) as any);
+      // Normalize email before sending to backend
+      const normalizedData = {
+        ...formData,
+        email: formData.email.toLowerCase().trim()
+      };
+      await dispatch(register(normalizedData) as any);
       setSuccess(true);
       setTimeout(() => navigate('/login'), 3000);
     } catch (err) {

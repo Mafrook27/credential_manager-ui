@@ -6,8 +6,26 @@ import { forceLogout } from '../utils/sessionExpiry';
  * Handles session-based authentication with automatic token refresh
  */
 
+// Get API URL based on environment
+// Use VITE_API_URL for development, VITE_PROD_API_URL for production
+const getBaseURL = () => {
+  // In development, use VITE_API_URL
+  if (import.meta.env.DEV) {
+    return import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  }
+  // In production, use VITE_PROD_API_URL
+  return import.meta.env.VITE_PROD_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+};
+
+const baseURL = getBaseURL();
+
+// Log base URL in development for debugging
+if (import.meta.env.DEV) {
+  console.log('🔗 API Base URL:', baseURL);
+}
+
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_PROD_API_URL || import.meta.env.VITE_API_URL_NGROK || 'http://localhost:5000/api',
+  baseURL: baseURL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -125,17 +143,22 @@ axiosInstance.interceptors.response.use(
           
           // Check if it's a "logged in elsewhere" error
           const refreshErrorData = (refreshError as any)?.response?.data;
-          const isLoggedInElsewhere = refreshErrorData?.message?.includes('logged in from another device');
+          const isLoggedInElsewhere = refreshErrorData?.code === 'SESSION_INACTIVE' || 
+                                      refreshErrorData?.message?.includes('logged in from another device');
           
           // Refresh failed, clear queue and redirect to login
           processQueue(refreshError as Error);
           isRefreshing = false;
 
+          // Mark error as handled (don't show toast in components)
+          (refreshError as any).isAuthError = true;
+          (refreshError as any).handledByInterceptor = true;
+
           // Force logout with appropriate message
           if (isLoggedInElsewhere) {
             forceLogout('Logged in from another device');
           } else {
-            forceLogout('Token refresh failed');
+            forceLogout('Session expired');
           }
           return Promise.reject(refreshError);
         }
@@ -148,6 +171,10 @@ axiosInstance.interceptors.response.use(
           errorData.code === 'INVALID_TOKEN') {
         console.warn(`🚨 Session error detected: ${errorData.code}`);
         
+        // Mark error as handled (don't show toast in components)
+        (error as any).isAuthError = true;
+        (error as any).handledByInterceptor = true;
+        
         // Check if logged in from another device
         const isLoggedInElsewhere = errorData.code === 'SESSION_INACTIVE' || 
                                     errorData.message?.toLowerCase().includes('another device');
@@ -156,7 +183,7 @@ axiosInstance.interceptors.response.use(
         if (isLoggedInElsewhere) {
           forceLogout('Logged in from another device');
         } else {
-          forceLogout(`Session invalid: ${errorData.code}`);
+          forceLogout('Session expired');
         }
         return Promise.reject(error);
       }

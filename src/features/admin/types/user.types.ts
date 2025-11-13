@@ -14,6 +14,9 @@ export interface User {
   status: UserStatus;
   isVerified?: boolean;
   isActive?: boolean;
+  isDeleted?: boolean;
+  deletedAt?: string;
+  deletedBy?: string;
   createdAt?: string;
   lastLogin?: string;
 }
@@ -29,4 +32,5 @@ export interface UserActionsMenuProps {
   onEditPassword: (userId: string) => void;
   onDelete: (userId: string) => void;
   onBlock: (userId: string) => void;
+  onApprove: (userId: string) => void;
 }

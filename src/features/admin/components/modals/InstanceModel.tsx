@@ -9,6 +9,7 @@ import { Modal } from '../../../../common/components/Modal';
 import { ConfirmModal } from '../../../../common/modals/ConfirmModal';
 import { instanceApi, type RootInstance, type SubInstance } from '../../../../common/api/instanceApi';
 import { toast } from '../../../../common/utils/toast';
+import { shouldShowError, getErrorMessage } from '../../../../utils/errorHandler';
 
 // ==================== TYPES ====================
 interface InstanceManagementModalProps {
@@ -95,8 +96,9 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
       }
     } catch (error: any) {
       console.error('Failed to load instances:', error);
-      const errorData = error.response?.data;
-      toast.error(errorData?.message || 'Failed to load services');
+      if (shouldShowError(error)) {
+        toast.error(getErrorMessage(error, 'Failed to load services'));
+      }
     } finally {
       setLoading(false);
     }
@@ -115,7 +117,9 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
       });
     } catch (error: any) {
       console.error('Failed to load sub-instances:', error);
-      toast.error('Failed to load sub-instances');
+      if (shouldShowError(error)) {
+        toast.error(getErrorMessage(error, 'Failed to load sub-instances'));
+      }
     }
   }, []);
 
@@ -206,9 +210,11 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
       onSuccess?.();
     } catch (error: any) {
       console.error('Save service failed:', error);
-      const errorData = error.response?.data;
-      setServiceError(errorData?.message || 'Failed to save service');
-      toast.error(errorData?.message || 'Failed to save service');
+      if (shouldShowError(error)) {
+        const errorMsg = getErrorMessage(error, 'Failed to save service');
+        setServiceError(errorMsg);
+        toast.error(errorMsg);
+      }
     } finally {
       setActionLoading(false);
     }
@@ -240,8 +246,9 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
       onSuccess?.();
     } catch (error: any) {
       console.error('Delete service failed:', error);
-      const errorData = error.response?.data;
-      toast.error(errorData?.message || 'Failed to delete service');
+      if (shouldShowError(error)) {
+        toast.error(getErrorMessage(error, 'Failed to delete service'));
+      }
     } finally {
       setActionLoading(false);
     }
@@ -284,10 +291,11 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
       onSuccess?.();
     } catch (error: any) {
       console.error('Save sub instance failed:', error);
-      const errorData = error.response?.data;
-      const errorMsg = errorData?.message || 'Failed to save folder';
-      setFolderError(errorMsg);
-      toast.error(errorMsg);
+      if (shouldShowError(error)) {
+        const errorMsg = getErrorMessage(error, 'Failed to save folder');
+        setFolderError(errorMsg);
+        toast.error(errorMsg);
+      }
     } finally {
       setActionLoading(false);
     }
@@ -314,8 +322,9 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
       onSuccess?.();
     } catch (error: any) {
       console.error('Delete sub-instance failed:', error);
-      const errorData = error.response?.data;
-      toast.error(errorData?.message || 'Failed to delete sub-instance');
+      if (shouldShowError(error)) {
+        toast.error(getErrorMessage(error, 'Failed to delete sub-instance'));
+      }
     } finally {
       setActionLoading(false);
     }
@@ -352,7 +361,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
     }, [name, onSave]);
 
     return (
-      <div className="flex items-center justify-between p-2 sm:p-3 group hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-lg transition-colors">
+      <div className="flex items-center justify-between p-2 sm:p-3 group hover:bg-gray-100 rounded-lg transition-colors">
         {isEditing ? (
           <div className="flex-1 mr-1.5 sm:mr-2">
             <input 
@@ -366,7 +375,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
               placeholder="Enter sub-instance name"
               className={`w-full px-2 py-1.5 text-sm rounded border ${
                 folderError ? 'border-red-500 focus:ring-red-500' : 'border-indigo-400 focus:ring-indigo-500'
-              } bg-white dark:bg-gray-700 focus:ring-2 focus:outline-none transition-all`}
+              } bg-white focus:ring-2 focus:outline-none transition-all`}
               autoFocus
               disabled={actionLoading}
             />
@@ -375,7 +384,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
             )}
           </div>
         ) : (
-          <span className="font-medium text-gray-700 dark:text-gray-300 text-xs sm:text-sm break-words flex-1">
+          <span className="font-medium text-gray-700 text-xs sm:text-sm break-words flex-1">
             {sub.name}
           </span>
         )}
@@ -386,7 +395,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
               <button 
                 onClick={() => onSave(name)}
                 disabled={actionLoading}
-                className="p-1.5 rounded-md text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 disabled:opacity-50 transition-colors" 
+                className="p-1.5 rounded-md text-green-600 hover:bg-green-100 disabled:opacity-50 transition-colors" 
                 title="Save"
               >
                 {actionLoading ? <CircularProgress size={16} /> : <IoSaveOutline className="w-4 h-4" />}
@@ -397,7 +406,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
                   setFolderError('');
                 }}
                 disabled={actionLoading}
-                className="p-1.5 rounded-md text-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" 
+                className="p-1.5 rounded-md text-gray-600 hover:bg-gray-200 transition-colors" 
                 title="Cancel"
               >
                 <IoClose className="w-3 h-3" />
@@ -408,7 +417,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
               <button 
                 onClick={() => setEditingSub({ id: sub.subInstanceId, name: sub.name })}
                 disabled={actionLoading}
-                className="p-1.5 rounded-md text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors" 
+                className="p-1.5 rounded-md text-blue-600 hover:bg-blue-100 transition-colors" 
                 title="Edit sub-instance"
               >
                 <IoCreateOutline className="w-4 h-4" />
@@ -416,7 +425,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
               <button 
                 onClick={onDelete}
                 disabled={actionLoading}
-                className="p-1.5 rounded-md text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors" 
+                className="p-1.5 rounded-md text-red-600 hover:bg-red-100 transition-colors" 
                 title="Delete sub-instance"
               >
                 <IoTrashOutline className="w-4 h-4" />
@@ -447,7 +456,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
     }, [name, onSave, onCancel]);
     
     return (
-      <div className="p-2 sm:p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border-2 border-indigo-200 dark:border-indigo-800">
+      <div className="p-2 sm:p-3 bg-indigo-50 rounded-lg border-2 border-indigo-200">
         <div className="flex items-center gap-1.5 sm:gap-2">
           <input 
             type="text" 
@@ -460,7 +469,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
             placeholder="Enter sub-instance name..." 
             className={`flex-1 px-2 sm:px-3 py-1.5 text-sm rounded border ${
               folderError ? 'border-red-500 focus:ring-red-500' : 'border-indigo-300 focus:ring-indigo-500'
-            } bg-white dark:bg-gray-700 focus:ring-2 focus:outline-none transition-all`}
+            } bg-white focus:ring-2 focus:outline-none transition-all`}
             autoFocus
             disabled={actionLoading}
           />
@@ -475,7 +484,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
           <button 
             onClick={onCancel}
             disabled={actionLoading}
-            className="p-1.5 sm:p-2 rounded-md text-gray-600 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors flex-shrink-0" 
+            className="p-1.5 sm:p-2 rounded-md text-gray-600 bg-gray-200 hover:bg-gray-300 transition-colors flex-shrink-0" 
             title="Cancel"
           >
             <IoClose className="w-4 h-4" />
@@ -494,12 +503,12 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
     if (leftPanelView === 'add_service' || leftPanelView === 'edit_service') {
       return (
         <div className="p-4 space-y-4">
-          <h3 className="text-lg font-bold text-gray-800 dark:text-white">
+          <h3 className="text-lg font-bold text-gray-800">
             {leftPanelView === 'add_service' ? 'Add New Service' : 'Edit Service'}
           </h3>
           
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               Service Name <span className="text-red-500">*</span>
             </label>
             <input 
@@ -511,8 +520,8 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
                 setServiceError('');
               }}
               className={`w-full px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-md border ${
-                serviceError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-600 focus:ring-indigo-500'
-              } bg-white dark:bg-gray-800 focus:ring-2 focus:outline-none transition-all`}
+                serviceError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500'
+              } bg-white focus:ring-2 focus:outline-none transition-all`}
               autoFocus
               disabled={actionLoading}
             />
@@ -521,7 +530,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
             )}
           </div>
           
-          <div className="flex justify-end gap-1.5 sm:gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex justify-end gap-1.5 sm:gap-2 pt-2 border-t border-gray-200">
             <button 
               onClick={() => {
                 setLeftPanelView('list');
@@ -529,7 +538,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
                 setFormData({ id: '', name: '' });
               }}
               disabled={actionLoading}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 font-medium text-xs sm:text-sm transition-colors disabled:opacity-50"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium text-xs sm:text-sm transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
@@ -549,7 +558,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
 
     return (
       <>
-        <div className="p-2 sm:p-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div className="p-2 sm:p-3 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center gap-1.5 sm:gap-2">
             <div className="flex-1 relative min-w-0">
               <input
@@ -557,12 +566,12 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
                 placeholder="Search..."
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                className="w-full px-2.5 sm:px-3 py-2 pr-8 sm:pr-10 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                className="w-full px-2.5 sm:px-3 py-2 pr-8 sm:pr-10 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
               />
               {inputValue && (
                 <button
                   onClick={() => setInputValue('')}
-                  className="absolute p-0 right-2 sm:right-3 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full bg-gray-400 dark:bg-gray-500 hover:bg-gray-500 dark:hover:bg-gray-400 text-white transition-all hover:scale-110"
+                  className="absolute p-0 right-2 sm:right-3 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full bg-gray-400 hover:bg-gray-500 text-white transition-all hover:scale-110"
                   title="Clear search"
                 >
                   <IoClose className="w-3 h-3 font-bold p-0" />
@@ -597,15 +606,15 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
                 onClick={() => setSelectedInstanceId(instance.rootInstanceId)}
                 className={`w-full text-left p-2 sm:p-2.5 rounded-lg flex items-start gap-2 sm:gap-3 transition-all ${
                   selectedInstanceId === instance.rootInstanceId 
-                    ? 'bg-indigo-100 dark:bg-indigo-900/50 shadow-sm' 
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'
+                    ? 'bg-indigo-100 shadow-sm' 
+                    : 'hover:bg-gray-100'
                 }`}
               >
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-xs sm:text-sm text-gray-800 dark:text-white break-words line-clamp-2">
+                  <p className="font-semibold text-xs sm:text-sm text-gray-800 break-words line-clamp-2">
                     {instance.serviceName}
                   </p>
-                  <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5">
                     {instance.subInstances?.length || 0} sub-instance{instance.subInstances?.length !== 1 ? 's' : ''}
                   </p>
                 </div>
@@ -613,8 +622,8 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
             ))
           ) : (
             <div className="text-center py-8 px-3">
-              <IoFolderOutline className="w-12 h-12 sm:w-14 sm:h-14 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-              <p className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400">
+              <IoFolderOutline className="w-12 h-12 sm:w-14 sm:h-14 text-gray-300 mx-auto mb-2" />
+              <p className="text-xs sm:text-sm font-semibold text-gray-600">
                 {inputValue ? 'No results found' : 'No services created yet'}
               </p>
               <p className="text-[10px] sm:text-xs text-gray-500 mt-1 break-words">
@@ -632,8 +641,8 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
     if (!selectedInstance) {
       return (
         <div className="hidden md:flex flex-col items-center justify-center h-full text-center p-6">
-          <IoFolderOutline className="w-16 h-16 sm:w-20 sm:h-20 text-gray-300 dark:text-gray-600 mb-3" />
-          <p className="font-semibold text-base sm:text-lg text-gray-700 dark:text-gray-300 mb-2">
+          <IoFolderOutline className="w-16 h-16 sm:w-20 sm:h-20 text-gray-300 mb-3" />
+          <p className="font-semibold text-base sm:text-lg text-gray-700 mb-2">
             Select a Service
           </p>
           <p className="text-xs sm:text-sm text-gray-500 max-w-xs break-words">
@@ -645,18 +654,18 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
 
     return (
       <div className="flex flex-col h-full">
-        <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div className="p-3 sm:p-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
               <button
                 onClick={() => setSelectedInstanceId(null)}
-                className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 md:hidden transition-colors flex-shrink-0"
+                className="p-2 rounded-full text-gray-600 hover:bg-gray-200 md:hidden transition-colors flex-shrink-0"
                 title="Back to services"
               >
                 <IoArrowBackOutline className="w-5 h-5" />
               </button>
               <div className="min-w-0 flex-1">
-                <h2 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 dark:text-white break-words line-clamp-2">
+                <h2 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 break-words line-clamp-2">
                   {selectedInstance.serviceName}
                 </h2>
               </div>
@@ -673,7 +682,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
                   setServiceError('');
                 }}
                 disabled={actionLoading}
-                className="p-1.5 sm:p-2 rounded-lg text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors disabled:opacity-50" 
+                className="p-1.5 sm:p-2 rounded-lg text-blue-600 hover:bg-blue-100 transition-colors disabled:opacity-50" 
                 title="Edit service"
               >
                 <IoCreateOutline className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -681,7 +690,7 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
               <button 
                 onClick={() => handleDeleteService(selectedInstance)}
                 disabled={actionLoading}
-                className="p-1.5 sm:p-2 rounded-lg text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50" 
+                className="p-1.5 sm:p-2 rounded-lg text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50" 
                 title="Delete service"
               >
                 <IoTrashOutline className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -725,14 +734,14 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
           
           {!addingSub && (!selectedInstance.subInstances || selectedInstance.subInstances.length === 0) && (
             <div className="text-center py-12 sm:py-16 px-3">
-              <IoFolderOpenOutline className="w-12 h-12 sm:w-14 sm:h-14 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+              <IoFolderOpenOutline className="w-12 h-12 sm:w-14 sm:h-14 text-gray-300 mx-auto mb-2" />
               <p className="text-gray-500 text-xs sm:text-sm mb-2 font-medium break-words">No subinstance  in this service yet</p>
               <button 
                 onClick={() => {
                   setAddingSub(true);
                   setFolderError('');
                 }}
-                className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium underline transition-colors"
+                className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 font-medium underline transition-colors"
               >
                 Create first subinstance 
               </button>
@@ -753,17 +762,17 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
         subtitle="Organize your credentials by services and associated sub instance"
         maxWidth="2xl"
       >
-        <div className="flex flex-col md:flex-row border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 h-[70vh] sm:h-[65vh] max-h-[600px] overflow-hidden shadow-xl">
+        <div className="flex flex-col md:flex-row border border-gray-200 rounded-lg bg-white h-[70vh] sm:h-[65vh] max-h-[600px] overflow-hidden shadow-xl">
           <div className={`
             ${selectedInstanceId ? 'hidden md:flex' : 'flex'} 
-            w-full md:w-1/3 border-r border-gray-200 dark:border-gray-700 flex-col bg-gray-50 dark:bg-gray-800/50
+            w-full md:w-1/3 border-r border-gray-200 flex-col bg-gray-50
           `}>
             {renderLeftPanel()}
           </div>
 
           <div className={`
             ${selectedInstanceId ? 'flex' : 'hidden md:flex'}
-            w-full md:w-2/3 flex-col bg-white dark:bg-gray-900
+            w-full md:w-2/3 flex-col bg-white
           `}>
             {renderRightPanel()}
           </div>

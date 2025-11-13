@@ -3,7 +3,7 @@
 import React from 'react';
 import {type GridColDef, type GridRenderCellParams } from '@mui/x-data-grid';
 import { IconButton } from '@mui/material';
-import { MdCheck, MdMoreVert } from 'react-icons/md';
+import { MdMoreVert } from 'react-icons/md';
 import { UserAvatar } from './UserAvatar';
 import { type User, type UserRole, type UserStatus } from '../../types/user.types';
 import { STATUS_CONFIG, ROLE_CONFIG } from '../../constants/user.constants';
@@ -12,7 +12,6 @@ import { STATUS_CONFIG, ROLE_CONFIG } from '../../constants/user.constants';
  * Get column definitions for User Management table
  */
 export const getUserTableColumns = (
-  onApprove: (userId: string) => void,
   onMenuClick: (event: React.MouseEvent<HTMLElement>, user: User) => void
 ): GridColDef[] => [
   {
@@ -108,31 +107,19 @@ export const getUserTableColumns = (
   {
     field: 'actions',
     headerName: 'Actions',
-    flex: 0.8,
-    minWidth: 140,
+    flex: 0.5,
+    minWidth: 80,
     align: 'center',
     headerAlign: 'center',
     sortable: false,
     filterable: false,
     renderCell: (params: GridRenderCellParams) => (
-      <div className="d-flex align-items-center justify-content-center gap-2">
-        {params.row.status === 'pending' && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onApprove(params.row.id);
-            }}
-            className="btn btn-sm btn-success d-flex align-items-center justify-content-center"
-            style={{ width: '32px', height: '32px', padding: 0 }}
-            title="Approve"
-          >
-            <MdCheck size={18} />
-          </button>
-        )}
+      <div className="d-flex align-items-center justify-content-center">
         <IconButton
           size="small"
           onClick={(e) => onMenuClick(e, params.row)}
           style={{ width: '32px', height: '32px' }}
+          disabled={params.row.role === 'admin'}
         >
           <MdMoreVert size={18} />
         </IconButton>

@@ -91,22 +91,22 @@ export const Modal: React.FC<ModalProps> = ({
     >
       <div
         ref={modalRef}
-        className={`w-full ${maxWidthClasses[maxWidth]} bg-white dark:bg-gray-900 rounded-xl shadow-2xl overflow-hidden animate-slideUp flex flex-col max-h-[90vh]`}
+        className={`w-full ${maxWidthClasses[maxWidth]} bg-white rounded-xl shadow-2xl overflow-hidden animate-slideUp flex flex-col max-h-[90vh]`}
       >
         {/* Header */}
-        <div className="relative px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div className="relative px-6 py-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-start justify-between">
             <div className="flex-1 pr-8">
-              <h2 className="text-gray-900 dark:text-white text-xl font-bold leading-tight">
+              <h2 className="text-gray-900 text-xl font-bold leading-tight">
                 {title}
               </h2>
               {subtitle && (
-                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{subtitle}</p>
+                <p className="text-gray-500 text-sm mt-1">{subtitle}</p>
               )}
             </div>
             <button
               onClick={onClose}
-              className="absolute top-3.5 right-4 text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg p-2 transition-colors"
+              className="absolute top-3.5 right-4 text-gray-400 hover:bg-gray-200 rounded-lg p-2 transition-colors"
               aria-label="Close modal"
             >
               <IoClose className="w-5 h-5" />
@@ -121,7 +121,7 @@ export const Modal: React.FC<ModalProps> = ({
 
         {/* Footer */}
         {footer && (
-          <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex-shrink-0">
             {footer}
           </div>
         )}

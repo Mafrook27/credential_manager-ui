@@ -28,26 +28,26 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   const typeStyles = {
     warning: {
       icon: <IoWarningOutline className="w-12 h-12" />,
-      iconBg: 'bg-yellow-100 dark:bg-yellow-900/30',
-      iconColor: 'text-yellow-600 dark:text-yellow-400',
+      iconBg: 'bg-yellow-100',
+      iconColor: 'text-yellow-600',
       buttonBg: 'bg-yellow-600 hover:bg-yellow-700',
     },
     danger: {
       icon: <IoWarningOutline className="w-12 h-12" />,
-      iconBg: 'bg-red-100 dark:bg-red-900/30',
-      iconColor: 'text-red-600 dark:text-red-400',
+      iconBg: 'bg-red-100',
+      iconColor: 'text-red-600',
       buttonBg: 'bg-red-600 hover:bg-red-700',
     },
     success: {
       icon: <IoCheckmarkCircleOutline className="w-12 h-12" />,
-      iconBg: 'bg-green-100 dark:bg-green-900/30',
-      iconColor: 'text-green-600 dark:text-green-400',
+      iconBg: 'bg-green-100',
+      iconColor: 'text-green-600',
       buttonBg: 'bg-green-600 hover:bg-green-700',
     },
     info: {
       icon: <IoCheckmarkCircleOutline className="w-12 h-12" />,
-      iconBg: 'bg-blue-100 dark:bg-blue-900/30',
-      iconColor: 'text-blue-600 dark:text-blue-400',
+      iconBg: 'bg-blue-100',
+      iconColor: 'text-blue-600',
       buttonBg: 'bg-blue-600 hover:bg-blue-700',
     },
   };
@@ -69,7 +69,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="px-6 py-2.5 rounded-lg text-sm font-medium bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2.5 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {cancelText}
           </button>
@@ -95,7 +95,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         <div className={`${style.iconBg} ${style.iconColor} rounded-full p-4 mb-4`}>
           {style.icon}
         </div>
-        <p className="text-gray-600 dark:text-gray-400 text-base leading-relaxed">
+        <p className="text-gray-600 text-base leading-relaxed">
           {message}
         </p>
       </div>

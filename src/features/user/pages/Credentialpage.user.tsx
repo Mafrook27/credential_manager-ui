@@ -11,6 +11,7 @@ import { userCredentialApi } from '../api/user.credential.api';
 import { instanceApi } from '../../../common/api/instanceApi';
 import type { RootInstance, SubInstance } from '../../../common/api/instanceApi';
 import type { User, UserRole } from '../../admin/types/user.types';
+import { shouldShowError, getErrorMessage } from '../../../utils/errorHandler';
 
 // ========== TYPES ==========
 interface ApiCredential {
@@ -32,10 +33,6 @@ interface ApiCredential {
   createdBy?: { _id: string; name: string; email: string };
   createdAt: string;
   isOwner: boolean;
-}
-
-interface ApiError {
-  response?: { data?: { message?: string } };
 }
 
 // ========== COMPONENT ==========
@@ -121,10 +118,11 @@ export const UserCredentialPage: React.FC = () => {
       setTotalItems(response.total);
       setCurrentPage(response.page);
     } catch (err: unknown) {
-      const apiError = err as ApiError;
-      const errorMessage = apiError.response?.data?.message || 'Failed to fetch credentials';
-      setError(errorMessage);
-      toast.error(errorMessage);
+      if (shouldShowError(err)) {
+        const errorMessage = getErrorMessage(err, 'Failed to fetch credentials');
+        setError(errorMessage);
+        toast.error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -144,7 +142,9 @@ export const UserCredentialPage: React.FC = () => {
       setRootInstances(instances);
     } catch (err: unknown) {
       console.error('Error fetching root instances:', err);
-      toast.error('Failed to fetch services');
+      if (shouldShowError(err)) {
+        toast.error(getErrorMessage(err, 'Failed to fetch services'));
+      }
     }
   }, []);
 
@@ -162,7 +162,9 @@ export const UserCredentialPage: React.FC = () => {
       setSubInstances(subInsts);
     } catch (err: unknown) {
       console.error('Error fetching sub-instances:', err);
-      toast.error('Failed to fetch sub-instances');
+      if (shouldShowError(err)) {
+        toast.error(getErrorMessage(err, 'Failed to fetch sub-instances'));
+      }
     }
   }, []);
 
@@ -188,36 +190,49 @@ export const UserCredentialPage: React.FC = () => {
         : users;
 
       // ✅ Map with type casting
-      const mappedUsers: User[] = filteredUsers.map((user: unknown) => {
-        if (!user) return null as unknown as User;
+      const mappedUsers: User[] = filteredUsers
+        .filter((user: unknown) => {
+          if (!user) return false;
+          const u = user as {
+            isVerified?: boolean;
+            isActive?: boolean;
+            isDeleted?: boolean;
+          };
+          // Only show verified, active, non-deleted users
+          return u.isVerified === true && u.isActive === true && u.isDeleted !== true;
+        })
+        .map((user: unknown) => {
+          if (!user) return null as unknown as User;
 
-        const u = user as {
-          _id?: string;
-          id?: string;
-          name?: string;
-          email?: string;
-          role?: string;
-          isVerified?: boolean;
-          isActive?: boolean;
-          createdAt?: string;
-        };
+          const u = user as {
+            _id?: string;
+            id?: string;
+            name?: string;
+            email?: string;
+            role?: string;
+            isVerified?: boolean;
+            isActive?: boolean;
+            createdAt?: string;
+          };
 
-        return {
-          id: u._id || u.id || '',
-          name: u.name || '',
-          email: u.email || '',
-          role: (u.role as UserRole) || 'user',
-          status: !u.isActive ? ('inactive' as const) : (u.isVerified ? ('active' as const) : ('pending' as const)),
-          isVerified: u.isVerified,
-          isActive: u.isActive,
-          createdAt: u.createdAt || new Date().toISOString(),
-        } satisfies User;
-      });
+          return {
+            id: u._id || u.id || '',
+            name: u.name || '',
+            email: u.email || '',
+            role: (u.role as UserRole) || 'user',
+            status: !u.isActive ? ('inactive' as const) : (u.isVerified ? ('active' as const) : ('pending' as const)),
+            isVerified: u.isVerified,
+            isActive: u.isActive,
+            createdAt: u.createdAt || new Date().toISOString(),
+          } satisfies User;
+        });
 
       setAvailableUsers(mappedUsers);
     } catch (err: unknown) {
       console.error('Error fetching users:', err);
-      toast.error('Failed to fetch users');
+      if (shouldShowError(err)) {
+        toast.error(getErrorMessage(err, 'Failed to fetch users'));
+      }
       setAvailableUsers([]);
     }
   }, []); 
@@ -249,8 +264,9 @@ export const UserCredentialPage: React.FC = () => {
         toast.success('Credential deleted successfully');
         fetchCredentials();
       } catch (err: unknown) {
-        const apiError = err as ApiError;
-        toast.error(apiError.response?.data?.message || 'Failed to delete');
+        if (shouldShowError(err)) {
+          toast.error(getErrorMessage(err, 'Failed to delete'));
+        }
       }
     },
     [fetchCredentials]
@@ -265,8 +281,9 @@ export const UserCredentialPage: React.FC = () => {
         password: credential?.password || '',
       };
     } catch (err: unknown) {
-      const apiError = err as ApiError;
-      toast.error(apiError.response?.data?.message || 'Failed to decrypt');
+      if (shouldShowError(err)) {
+        toast.error(getErrorMessage(err, 'Failed to decrypt'));
+      }
       throw err;
     }
   }, []);
@@ -278,8 +295,9 @@ export const UserCredentialPage: React.FC = () => {
         toast.success('Credential shared successfully');
         fetchCredentials();
       } catch (err: unknown) {
-        const apiError = err as ApiError;
-        toast.error(apiError.response?.data?.message || 'Failed to share');
+        if (shouldShowError(err)) {
+          toast.error(getErrorMessage(err, 'Failed to share'));
+        }
       }
     },
     [fetchCredentials]
@@ -292,8 +310,9 @@ export const UserCredentialPage: React.FC = () => {
         toast.success('Access revoked successfully');
         fetchCredentials();
       } catch (err: unknown) {
-        const apiError = err as ApiError;
-        toast.error(apiError.response?.data?.message || 'Failed to revoke');
+        if (shouldShowError(err)) {
+          toast.error(getErrorMessage(err, 'Failed to revoke'));
+        }
       }
     },
     [fetchCredentials]
@@ -337,8 +356,9 @@ const handleOpenEditModal = useCallback((credential: ApiCredential) => {
         handleCloseModal();
         fetchCredentials();
       } catch (err: unknown) {
-        const apiError = err as ApiError;
-        toast.error(apiError.response?.data?.message || 'Failed to create credential');
+        if (shouldShowError(err)) {
+          toast.error(getErrorMessage(err, 'Failed to create credential'));
+        }
         throw err;
       }
     },
@@ -360,8 +380,9 @@ const handleOpenEditModal = useCallback((credential: ApiCredential) => {
         handleCloseModal();
         fetchCredentials();
       } catch (err: unknown) {
-        const apiError = err as ApiError;
-        toast.error(apiError.response?.data?.message || 'Failed to update credential');
+        if (shouldShowError(err)) {
+          toast.error(getErrorMessage(err, 'Failed to update credential'));
+        }
         throw err;
       }
     },

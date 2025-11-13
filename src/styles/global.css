@@ -11,7 +11,7 @@
   font-family: Poppins, system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color-scheme: light;
+  color-scheme: light !important;
   color: #213547;
   background-color: #ffffff;
   font-synthesis: none;
@@ -43,7 +43,8 @@ h1 {
   line-height: 1.1;
 }
 
-/* FIX: Prevent button hover flicker in Chrome dark mode */
+/* FIX: Prevent button hover flicker in Chrome dark mode and force dark mode */
+/* Comprehensive button fixes to prevent white hover effect */
 button {
   border-radius: 8px;
   border: 1px solid transparent;
@@ -90,11 +91,7 @@ button:hover {
     transition: all 0.15s ease-in-out !important;
   }
 
-  /* Fix for Tailwind dark mode hover variants */
-  .dark\:hover\:bg-gray-700:hover,
-  .dark\:hover\:bg-gray-800:hover {
-    color-scheme: light !important;
-  }
+
 
   /* Fix for group hover effects */
   .group:hover .group-hover\:bg-gray-100,

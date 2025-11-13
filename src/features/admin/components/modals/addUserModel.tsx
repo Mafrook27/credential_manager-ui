@@ -4,6 +4,7 @@ import { ConfirmModal } from '../../../../common/components/ConfirmModal';
 import { IoEyeOutline, IoEyeOffOutline, IoPersonAddOutline } from 'react-icons/io5';
 import { toast } from '../../../../common/utils/toast';
 import { adminApi } from '../../api/adminApi';
+import { shouldShowError, getErrorMessage } from '../../../../utils/errorHandler';
 
   
 interface AddUserModalProps {
@@ -106,7 +107,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
     try {
       await adminApi.createUser({
         name: formData.name,
-        email: formData.email,
+        email: formData.email.toLowerCase().trim(),
         password: formData.password,
         role: 'user',
       });
@@ -120,7 +121,9 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
       handleClose();
     } catch (error: any) {
       console.error('Failed to create user:', error);
-      toast.error(error?.response?.data?.message || 'Failed to create user');
+      if (shouldShowError(error)) {
+        toast.error(getErrorMessage(error, 'Failed to create user'));
+      }
     } finally {
       setLoading(false);
       setShowConfirm(false);
@@ -154,7 +157,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
           <button
             type="button"
             onClick={handleClose}
-            className="px-6 py-2.5 rounded-lg text-sm font-medium bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+            className="px-6 py-2.5 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
             disabled={loading}
           >
             Cancel
@@ -176,7 +179,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
         <div>
           <label
             htmlFor="name"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            className="block text-sm font-medium text-gray-700 mb-2"
           >
             Full Name
           </label>
@@ -191,8 +194,8 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
             className={`w-full px-4 py-3 rounded-lg border ${
               touched.name && errors.name
                 ? 'border-red-500 focus:ring-red-500'
-                : 'border-gray-300 dark:border-gray-600 focus:ring-blue-500'
-            } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent outline-none transition-all`}
+                : 'border-gray-300 focus:ring-blue-500'
+            } bg-white text-gray-900 focus:ring-2 focus:border-transparent outline-none transition-all`}
           />
           {touched.name && errors.name && (
             <p className="text-xs text-red-500 mt-1">{errors.name}</p>
@@ -203,7 +206,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
         <div>
           <label
             htmlFor="email"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            className="block text-sm font-medium text-gray-700 mb-2"
           >
             Email Address
           </label>
@@ -218,8 +221,8 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
             className={`w-full px-4 py-3 rounded-lg border ${
               touched.email && errors.email
                 ? 'border-red-500 focus:ring-red-500'
-                : 'border-gray-300 dark:border-gray-600 focus:ring-blue-500'
-            } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent outline-none transition-all`}
+                : 'border-gray-300 focus:ring-blue-500'
+            } bg-white text-gray-900 focus:ring-2 focus:border-transparent outline-none transition-all`}
           />
           {touched.email && errors.email && (
             <p className="text-xs text-red-500 mt-1">{errors.email}</p>
@@ -230,7 +233,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
         <div>
           <label
             htmlFor="password"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            className="block text-sm font-medium text-gray-700 mb-2"
           >
             Password
           </label>
@@ -246,13 +249,13 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
               className={`w-full px-4 py-3 pr-12 rounded-lg border ${
                 touched.password && errors.password
                   ? 'border-red-500 focus:ring-red-500'
-                  : 'border-gray-300 dark:border-gray-600 focus:ring-blue-500'
-              } bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent outline-none transition-all`}
+                  : 'border-gray-300 focus:ring-blue-500'
+              } bg-white text-gray-900 focus:ring-2 focus:border-transparent outline-none transition-all`}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
             >
               {showPassword ? (
                 <IoEyeOffOutline className="w-5 h-5" />

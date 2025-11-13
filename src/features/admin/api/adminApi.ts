@@ -137,26 +137,20 @@ export const adminApi = {
     return response.data;
   },
 
-  // Approve user (verify)
-  approveUser: async (userId: string) => {
-    const response = await axiosInstance.get(
-      `/admin/users/permission/${userId}`
+  // Set user verification status
+  setUserVerification: async (userId: string, isVerified: boolean) => {
+    const response = await axiosInstance.patch(
+      `/admin/users/${userId}/verify`,
+      { isVerified }
     );
     return response.data;
   },
 
-  // Block user (disable)
-  blockUser: async (userId: string) => {
-    const response = await axiosInstance.get(
-      `/admin/users/block/${userId}`
-    );
-    return response.data;
-  },
-
-  // Unblock user (enable)
-  unblockUser: async (userId: string) => {
-    const response = await axiosInstance.get(
-      `/admin/users/unblock/${userId}`
+  // Set user active status (block/unblock)
+  setUserActiveStatus: async (userId: string, isActive: boolean) => {
+    const response = await axiosInstance.patch(
+      `/admin/users/${userId}/active`,
+      { isActive }
     );
     return response.data;
   },

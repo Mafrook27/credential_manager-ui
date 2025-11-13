@@ -17,6 +17,7 @@ import { InstanceManagementModal } from "../components/modals/InstanceModel";
 import { ActionCard } from "../../../common/components/ActionCard";
 import type { User } from "../types/user.types";
 import { AxiosError } from 'axios';
+import { shouldShowError, getErrorMessage } from '../../../utils/errorHandler';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -54,7 +55,9 @@ const AdminDashboard: React.FC = () => {
     } catch (err) {
       // console.error("Failed to load stats:", err);
       setStatsError(true);
-      toast.error("Failed to load dashboard stats");
+      if (shouldShowError(err)) {
+        toast.error(getErrorMessage(err, "Failed to load dashboard stats"));
+      }
     } finally {
       setStatsLoading(false);
     }
@@ -73,7 +76,12 @@ const AdminDashboard: React.FC = () => {
       setSearchError('');
       const response = await adminApi.getAllUsers(1, 100);
       const unverifiedUsers = response.data.users
-        .filter((user: any) => !user.isVerified && user.isActive !== false)
+        .filter((user: any) => 
+          !user.isVerified && 
+          user.isActive !== false && 
+          !user.isDeleted && 
+          user.role !== 'admin'
+        )
         .map((user: any) => ({
           id: user._id,
           name: user.name,
@@ -96,44 +104,24 @@ const AdminDashboard: React.FC = () => {
   };
 
   // ======================
-  //   SEARCH USERS
+  //   SEARCH USERS (Client-side filtering)
   // ======================
-  const handleUserSearch = async (query: string) => {
+  const handleUserSearch = (query: string) => {
+    // Clear error on every search
+    setSearchError('');
+    
     if (!query.trim()) {
       setSearchResults(pendingUsers);
-      setSearchError('');
       return;
     }
 
-    try {
-      setSearchError('');
-      const response = await adminApi.getUsersList();
-      const filtered = response.data.users
-        .filter((user: any) => 
-          !user.isVerified && 
-          user.isActive !== false &&
-          (user.name.toLowerCase().includes(query.toLowerCase()) || 
-           user.email.toLowerCase().includes(query.toLowerCase()))
-        )
-        .map((user: any) => ({
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          status: 'pending' as const,
-          isVerified: user.isVerified,
-          isActive: user.isActive,
-          createdAt: user.createdAt,
-          lastLogin: user.lastLogin,
-        }));
-      setSearchResults(filtered);
-      if (filtered.length === 0) {
-        setSearchError('No users found matching your search.');
-      }
-    } catch (err: any) {
-      // console.error('Failed to search users:', err);
-      setSearchError('Failed to search users. Please try again.');
-    }
+    // Filter from already loaded pending users (client-side)
+    const filtered = pendingUsers.filter((user) => 
+      user.name.toLowerCase().includes(query.toLowerCase()) || 
+      user.email.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    setSearchResults(filtered);
   };
 
   // ======================
@@ -143,7 +131,7 @@ const AdminDashboard: React.FC = () => {
     try {
       setApprovingUserId(userId);
       setSearchError('');
-      const response = await adminApi.approveUser(userId);
+      const response = await adminApi.setUserVerification(userId, true);
       toast.success(response.message || 'User approved successfully');
       
       // Remove from pending list
@@ -162,29 +150,24 @@ const AdminDashboard: React.FC = () => {
   };
 
   // ======================
-  //   REJECT USER (Optional)
+  //   REJECT USER (Just remove from pending list, don't delete)
   // ======================
   const handleRejectUser = async (userId: string) => {
-    if (!window.confirm('Are you sure you want to reject this user? This will delete their account.')) {
+    if (!window.confirm('Are you sure you want to reject this user? They will be removed from the pending list.')) {
       return;
     }
     
     try {
       setApprovingUserId(userId);
       setSearchError('');
-      await adminApi.deleteUser(userId);
-      toast.success('User rejected and deleted successfully');
       
-      // Remove from pending list
+      // Just remove from pending list (no API call, no deletion)
       setPendingUsers(prev => prev.filter(u => u.id !== userId));
       setSearchResults(prev => prev.filter(u => u.id !== userId));
       
-      // Refresh stats
-      await getStats();
+      toast.success('User rejected and removed from pending list');
     } catch (err) {
-      const error = err as AxiosError<{ message?: string }>;
-      // console.error('Failed to reject user:', error);
-      setSearchError(error?.response?.data?.message || 'Failed to reject user. Please try again.');
+      setSearchError('Failed to reject user. Please try again.');
     } finally {
       setApprovingUserId(null);
     }
@@ -195,6 +178,7 @@ const AdminDashboard: React.FC = () => {
   // ======================
   const handleOpenApprovalModal = () => {
     setShowApprovalModal(true);
+    setSearchError(''); // Clear any previous search errors
     fetchPendingUsers();
   };
 
@@ -219,7 +203,9 @@ const AdminDashboard: React.FC = () => {
       setRowCount(response.pagination.total);
     } catch (error: any) {
       // console.error('Failed to fetch audit logs:', error);
-      toast.error(error.response?.data?.message || 'Failed to load audit logs');
+      if (shouldShowError(error)) {
+        toast.error(getErrorMessage(error, 'Failed to load audit logs'));
+      }
       setAuditLogs([]);
       setRowCount(0);
     } finally {

@@ -6,7 +6,7 @@ import {type User } from '../types/user.types';
 import { DEFAULT_PAGINATION } from '../constants/user.constants';
 import { adminApi } from '../api/adminApi';
 import { toast } from '../../../common/utils/toast';
-import { AxiosError } from 'axios';
+import { shouldShowError, getErrorMessage } from '../../../utils/errorHandler';
 
 /**
  * Custom hook for User Table logic
@@ -71,8 +71,11 @@ export const useUserTable = () => {
       setIsLoading(true);
       // console.log('💾 Saving user:', { userId, name, email });
       
+      // Normalize email before sending to backend
+      const normalizedEmail = email.toLowerCase().trim();
+      
       // Update name and email
-      await adminApi.updateUser(userId, { name, email });
+      await adminApi.updateUser(userId, { name, email: normalizedEmail });
       
       // console.log('✅ User updated successfully');
       toast.success('User updated successfully!');
@@ -82,9 +85,10 @@ export const useUserTable = () => {
       setSelectedUser(null);
       setRefreshTrigger(prev => prev + 1);
     } catch (error) {
-      const err = error as AxiosError<{ message?: string }>;
-      // console.error('❌ Error updating user:', err);
-      toast.error(err.response?.data?.message || 'Failed to update user');
+      // console.error('❌ Error updating user:', error);
+      if (shouldShowError(error)) {
+        toast.error(getErrorMessage(error, 'Failed to update user'));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -104,9 +108,10 @@ export const useUserTable = () => {
       setAnchorEl(null);
       setSelectedUser(null);
     } catch (error) {
-      const err = error as AxiosError<{ message?: string }>;
-      // console.error('❌ Error updating password:', err);
-      toast.error(err.response?.data?.message || 'Failed to update password');
+      // console.error('❌ Error updating password:', error);
+      if (shouldShowError(error)) {
+        toast.error(getErrorMessage(error, 'Failed to update password'));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -129,9 +134,10 @@ export const useUserTable = () => {
       setSelectedUser(null);
       setRefreshTrigger(prev => prev + 1);
     } catch (error) {
-      const err = error as AxiosError<{ message?: string }>;
-      // console.error('❌ Error deleting user:', err);
-      toast.error(err.response?.data?.message || 'Failed to delete user');
+      // console.error('❌ Error deleting user:', error);
+      if (shouldShowError(error)) {
+        toast.error(getErrorMessage(error, 'Failed to delete user'));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -143,16 +149,20 @@ export const useUserTable = () => {
       
       if (!selectedUser?.id) return;
       
-      await adminApi.approveUser(selectedUser.id);
+      // Toggle verification status - set to opposite of current state
+      const newVerificationStatus = !selectedUser.isVerified;
+      await adminApi.setUserVerification(selectedUser.id, newVerificationStatus);
       
-      toast.success('User approved successfully!');
+      const action = newVerificationStatus ? 'approved' : 'rejected';
+      toast.success(`User ${action} successfully!`);
       
       setIsApproveModalOpen(false);
       setSelectedUser(null);
       setRefreshTrigger(prev => prev + 1);
     } catch (error) {
-      const err = error as AxiosError<{ message?: string }>;
-      toast.error(err.response?.data?.message || 'Failed to approve user');
+      if (shouldShowError(error)) {
+        toast.error(getErrorMessage(error, 'Failed to update user status'));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -164,21 +174,20 @@ export const useUserTable = () => {
       
       if (!selectedUser?.id) return;
       
-      // Toggle between block and unblock based on current isActive status
-      if (selectedUser.isActive !== false) {
-        await adminApi.blockUser(selectedUser.id);
-        toast.success('User blocked successfully!');
-      } else {
-        await adminApi.unblockUser(selectedUser.id);
-        toast.success('User unblocked successfully!');
-      }
+      // Toggle active status - set to opposite of current state
+      const newActiveStatus = !selectedUser.isActive;
+      await adminApi.setUserActiveStatus(selectedUser.id, newActiveStatus);
+      
+      const action = newActiveStatus ? 'unblocked' : 'blocked';
+      toast.success(`User ${action} successfully!`);
       
       setIsBlockModalOpen(false);
       setSelectedUser(null);
       setRefreshTrigger(prev => prev + 1);
     } catch (error) {
-      const err = error as AxiosError<{ message?: string }>;
-      toast.error(err.response?.data?.message || 'Failed to update user status');
+      if (shouldShowError(error)) {
+        toast.error(getErrorMessage(error, 'Failed to update user status'));
+      }
     } finally {
       setIsLoading(false);
     }

@@ -8,7 +8,7 @@ import type { User, UserStatus } from '../types/user.types';
 import { selectSearchQuery, selectIsSearchActive } from '../redux/selectors';
 import { setSearchQuery } from '../redux/actions';
 import { toast } from '../../../common/utils/toast';
-import { getErrorMessage } from '../../../common/utils/errorHandler';
+import { getErrorMessage, shouldShowError } from '../../../utils/errorHandler';
 import { IoSearch } from 'react-icons/io5';
 import { useDebounce } from '../../../common/hooks/useDebounce';
 
@@ -20,6 +20,7 @@ interface UserData {
   role: string;
   isVerified: boolean;
   isActive?: boolean;
+  isDeleted?: boolean;
   createdAt?: string;
 }
 
@@ -141,20 +142,29 @@ export const AllCredentialsPage: React.FC = () => {
       }
       
       // Map to User type format expected by ActionCard
-      const mappedUsers: User[] = users.map((user: UserData) => ({
-        id: user._id || user.id || '',
-        name: user.name,
-        email: user.email,
-        role: user.role as 'admin' | 'user',
-        status: (!user.isActive ? 'inactive' : (user.isVerified ? 'active' : 'pending')) as UserStatus,
-        isVerified: user.isVerified,
-        isActive: user.isActive,
-        createdAt: user.createdAt,
-      }));
+      const mappedUsers: User[] = users
+        .filter((user: UserData) => 
+          // Only show verified, active, non-deleted users
+          user.isVerified === true && 
+          user.isActive === true && 
+          user.isDeleted !== true
+        )
+        .map((user: UserData) => ({
+          id: user._id || user.id || '',
+          name: user.name,
+          email: user.email,
+          role: user.role as 'admin' | 'user',
+          status: (!user.isActive ? 'inactive' : (user.isVerified ? 'active' : 'pending')) as UserStatus,
+          isVerified: user.isVerified,
+          isActive: user.isActive,
+          createdAt: user.createdAt,
+        }));
       setAvailableUsers(mappedUsers);
     } catch (err) {
       // console.error('Error fetching users:', err);
-      toast.error('Failed to fetch users');
+      if (shouldShowError(err)) {
+        toast.error(getErrorMessage(err, 'Failed to fetch users'));
+      }
     }
   };
 

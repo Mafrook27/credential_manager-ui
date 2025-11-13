@@ -62,16 +62,21 @@ export const UserManagementTable: React.FC = () => {
         const backendPage = paginationModel.page + 1;
         const response = await adminApi.getAllUsers(backendPage, paginationModel.pageSize);
         
-        // Map backend users to frontend format
-        const mappedUsers: User[] = response.data.users.map((backendUser) => ({
-          id: backendUser._id,
-          name: backendUser.name,
-          email: backendUser.email,
-          role: backendUser.role,
-          isVerified: backendUser.isVerified,
-          isActive: backendUser.isActive,
-          status: !backendUser.isActive ? 'inactive' : (backendUser.isVerified ? 'active' : 'pending'),
-        }));
+        // Map backend users to frontend format and filter out deleted users
+        const mappedUsers: User[] = response.data.users
+          .filter((backendUser: any) => !backendUser.isDeleted) // Only show non-deleted users
+          .map((backendUser: any) => ({
+            id: backendUser._id,
+            name: backendUser.name,
+            email: backendUser.email,
+            role: backendUser.role,
+            isVerified: backendUser.isVerified,
+            isActive: backendUser.isActive,
+            isDeleted: backendUser.isDeleted,
+            deletedAt: backendUser.deletedAt,
+            deletedBy: backendUser.deletedBy,
+            status: !backendUser.isActive ? 'inactive' : (backendUser.isVerified ? 'active' : 'pending'),
+          }));
         
         setUsers(mappedUsers);
         setTotalRows(response.total);
@@ -88,7 +93,7 @@ export const UserManagementTable: React.FC = () => {
     fetchUsers();
   }, [paginationModel.page, paginationModel.pageSize, refreshTrigger]);
 
-  const columns = getUserTableColumns(handleApprove, handleMenuClick);
+  const columns = getUserTableColumns(handleMenuClick);
 
   return (
     <>
@@ -121,6 +126,7 @@ export const UserManagementTable: React.FC = () => {
         onEditPassword={handleEditPassword}
         onDelete={handleDelete}
         onBlock={handleBlock}
+        onApprove={handleApprove}
       />
 
       {/* Edit User Modal */}
@@ -152,15 +158,19 @@ export const UserManagementTable: React.FC = () => {
         confirmButtonClass="bg-red-600 hover:bg-red-700"
       />
 
-      {/* Approve Confirmation Modal */}
+      {/* Approve/Reject Confirmation Modal */}
       <ConfirmModal
         isOpen={isApproveModalOpen}
         onClose={() => setIsApproveModalOpen(false)}
         onConfirm={handleConfirmApprove}
-        title="Approve User"
-        message={`Are you sure you want to approve ${selectedUser?.name}?`}
-        confirmText="Approve"
-        confirmButtonClass="bg-green-600 hover:bg-green-700"
+        title={selectedUser?.status === 'pending' ? "Approve User" : "Reject User"}
+        message={
+          selectedUser?.status === 'pending'
+            ? `Are you sure you want to approve ${selectedUser?.name}?`
+            : `Are you sure you want to reject ${selectedUser?.name}? This will mark them as pending again.`
+        }
+        confirmText={selectedUser?.status === 'pending' ? "Approve" : "Reject"}
+        confirmButtonClass={selectedUser?.status === 'pending' ? "bg-green-600 hover:bg-green-700" : "bg-yellow-600 hover:bg-yellow-700"}
       />
 
       {/* Block/Unblock Confirmation Modal */}

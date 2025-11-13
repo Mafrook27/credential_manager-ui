@@ -6,15 +6,11 @@ import { toast } from './../../../common/utils/toast';
 import { useNavigate } from 'react-router-dom';
 import { MdLock, MdEdit, MdLogout, MdSchedule, MdDelete } from 'react-icons/md';
 import { formatLastLogin } from '../../../utils/formatLastLogin';
+import { shouldShowError, getErrorMessage } from '../../../utils/errorHandler';
 // Import modals
 import { EditPasswordModal } from '../Components/EditPasswordModal';
 import { EditProfileModal } from '../Components/EditProfileModal';
 import { ConfirmModal } from '../../../common/modals/ConfirmModal';
-
-interface ApiError {
-  response?: { data?: { message?: string } };
-  message?: string;
-}
 
 export const Profile: React.FC = () => {
   const { user: authUser, isAuthenticated } = useAuth();
@@ -81,9 +77,12 @@ export const Profile: React.FC = () => {
         console.log('Profile data:', profileData);
         setUser(profileData);
       } catch (error: unknown) {
-        const apiError = error as ApiError;
-        console.error('Error:', apiError);
-        toast.error(apiError?.response?.data?.message || 'Failed to load profile');
+        console.error('Error:', error);
+        // Only show error if not handled by interceptor
+        if (shouldShowError(error)) {
+          const message = getErrorMessage(error, 'Failed to load profile');
+          toast.error(message);
+        }
       } finally {
         setLoading(false);
       }
@@ -102,13 +101,18 @@ export const Profile: React.FC = () => {
 
     try {
       setUpdating(true);
-      const updated = await userApi.updateProfile(id, { name, email });
+      // Normalize email before sending to backend
+      const normalizedEmail = email.toLowerCase().trim();
+      const updated = await userApi.updateProfile(id, { name, email: normalizedEmail });
       setUser(updated);
       setShowEditModal(false);
       toast.success('Profile updated successfully');
     } catch (error: unknown) {
-      const apiError = error as ApiError;
-      toast.error(apiError?.response?.data?.message || 'Failed to update profile');
+      // Only show error if not handled by interceptor
+      if (shouldShowError(error)) {
+        const message = getErrorMessage(error, 'Failed to update profile');
+        toast.error(message);
+      }
     } finally {
       setUpdating(false);
     }
@@ -121,8 +125,11 @@ export const Profile: React.FC = () => {
       setShowPasswordModal(false);
       toast.success('Password changed successfully');
     } catch (error: unknown) {
-      const apiError = error as ApiError;
-      toast.error(apiError?.response?.data?.message || 'Failed to change password');
+      // Only show error if not handled by interceptor
+      if (shouldShowError(error)) {
+        const message = getErrorMessage(error, 'Failed to change password');
+        toast.error(message);
+      }
     } finally {
       setUpdating(false);
     }
@@ -150,8 +157,11 @@ export const Profile: React.FC = () => {
         navigate('/login');
       }, 1500);
     } catch (error: unknown) {
-      const apiError = error as ApiError;
-      toast.error(apiError?.response?.data?.message || 'Failed to delete account');
+      // Only show error if not handled by interceptor
+      if (shouldShowError(error)) {
+        const message = getErrorMessage(error, 'Failed to delete account');
+        toast.error(message);
+      }
       setUpdating(false);
     }
   };

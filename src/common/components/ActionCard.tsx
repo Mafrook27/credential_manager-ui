@@ -94,9 +94,9 @@ export const ActionCard: React.FC<ActionCardProps> = ({
   const getStatusBadge = (status?: string) => {
     if (!status) return null;
     const statusConfig = {
-      active: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-      inactive: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-      pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+      active: 'bg-green-100 text-green-800 ',
+      inactive: 'bg-gray-100 text-gray-80',
+      pending: 'bg-yellow-100 text-yellow-800 ',
     };
     return (
       <span className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] sm:text-xs md:text-sm font-medium ${statusConfig[status as keyof typeof statusConfig]}`}>
@@ -112,31 +112,32 @@ export const ActionCard: React.FC<ActionCardProps> = ({
   const displayedApproveUsers = users.filter(user => searchQuery === '' || user.name.toLowerCase().includes(searchQuery.toLowerCase()) || user.email.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const renderUser = (user: User, isApproveMode: boolean = false) => (
-    <div key={user.id} className="flex items-center justify-between gap-2 sm:gap-3 px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded-lg border-b border-gray-100 dark:border-gray-800 last:border-b-0">
-      <div className="flex items-center gap-2 sm:gap-2.5 md:gap-3 flex-1 min-w-0">
-        <div className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-          <span className="text-primary font-semibold text-xs sm:text-sm md:text-base">{user.name.charAt(0).toUpperCase()}</span>
+    <div key={user.id} className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 sm:py-3.5 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0">
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+          <span className="text-primary font-semibold text-sm sm:text-base">{user.name.charAt(0).toUpperCase()}</span>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-gray-900 dark:text-white text-xs sm:text-sm md:text-base font-medium truncate">{user.name}</p>
-          <p className="text-gray-500 dark:text-gray-400 text-[10px] sm:text-xs md:text-sm truncate">{user.email}</p>
+        <div className="flex-1 min-w-0 flex flex-col justify-center">
+          <p className="text-gray-900 text-sm  mb-0 sm:text-base font-medium truncate leading-snug">{user.name}</p>
+          <p className="text-gray-500 text-xs sm:text-sm break-words overflow-hidden leading-snug mt-0.5" style={{ wordBreak: 'break-word', maxHeight: '2.5em' }}>{user.email}</p>
         </div>
       </div>
-      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-        {user.status && getStatusBadge(user.status)}
+      <div className="flex items-center gap-2 shrink-0">
+        {/* Only show status badge if NOT in approve mode (since all users are pending) */}
+        {!isApproveMode && user.status && getStatusBadge(user.status)}
         {isApproveMode && user.status === 'pending' && (
           <>
             <button
               onClick={() => onReject?.(user.id)}
               disabled={loadingUserId === user.id}
-              className="px-2.5 sm:px-3 md:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs md:text-sm font-medium rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 disabled:opacity-50 transition-colors"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-100 text-gray-700 disabled:opacity-50 transition-all whitespace-nowrap"
             >
               Reject
             </button>
             <button
               onClick={() => onApprove?.(user.id)}
               disabled={loadingUserId === user.id}
-              className="px-2.5 sm:px-3 md:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs md:text-sm font-medium rounded-full bg-primary text-white hover:bg-primary/90 disabled:opacity-50 transition-colors shadow-sm"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-50 transition-all shadow-sm whitespace-nowrap"
             >
               {loadingUserId === user.id ? 'Loading...' : 'Approve'}
             </button>
@@ -151,9 +152,9 @@ export const ActionCard: React.FC<ActionCardProps> = ({
       return displayedApproveUsers.length > 0 ? (
         displayedApproveUsers.map(user => renderUser(user, true))
       ) : (
-        <div className="text-center py-4 sm:py-6 px-2">
-          <IoPerson className="text-2xl sm:text-3xl md:text-4xl text-gray-300 dark:text-gray-600 mx-auto mb-1.5" />
-          <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm md:text-base">{emptyStateMessage || 'No pending users to approve.'}</p>
+        <div className="flex flex-col items-center justify-center py-8 sm:py-10 md:py-12 px-4">
+          <IoPerson className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-gray-300 mb-3" />
+          <p className="text-sm sm:text-base text-gray-500">{emptyStateMessage || 'No pending users to approve'}</p>
         </div>
       );
     }
@@ -162,22 +163,22 @@ export const ActionCard: React.FC<ActionCardProps> = ({
       if (viewMode === 'view') {
         // Show shared users with revoke option
         return displayedSharedUsers.length > 0 ? (
-          <div className="space-y-1">
+          <div>
             {displayedSharedUsers.map(user => (
-              <div key={user.id} className="flex items-center justify-between gap-2 sm:gap-3 px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded-lg border-b border-gray-100 dark:border-gray-800 last:border-b-0">
-                <div className="flex items-center gap-2 sm:gap-2.5 md:gap-3 flex-1 min-w-0">
-                  <div className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <span className="text-primary font-semibold text-xs sm:text-sm md:text-base">{user.name.charAt(0).toUpperCase()}</span>
+              <div key={user.id} className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 sm:py-3.5 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <span className="text-primary font-semibold text-sm sm:text-base">{user.name.charAt(0).toUpperCase()}</span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-gray-900 dark:text-white text-xs sm:text-sm md:text-base font-medium truncate">{user.name}</p>
-                    <p className="text-gray-500 dark:text-gray-400 text-[10px] sm:text-xs md:text-sm truncate">{user.email}</p>
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <p className="text-gray-900 text-sm sm:text-base font-medium truncate leading-snug">{user.name}</p>
+                    <p className="text-gray-500 text-xs sm:text-sm break-words overflow-hidden leading-snug mt-0.5" style={{ wordBreak: 'break-word', maxHeight: '2.5em' }}>{user.email}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => onRevoke?.(user.id)}
                   disabled={loadingUserId === user.id}
-                  className="px-2.5 sm:px-3 md:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs md:text-sm font-medium rounded-full border border-red-300 dark:border-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 disabled:opacity-50 transition-colors"
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg border border-red-300 hover:bg-red-50 text-red-600 disabled:opacity-50 transition-all shrink-0 whitespace-nowrap"
                 >
                   {loadingUserId === user.id ? 'Revoking...' : 'Revoke'}
                 </button>
@@ -185,34 +186,34 @@ export const ActionCard: React.FC<ActionCardProps> = ({
             ))}
           </div>
         ) : (
-          <div className="text-center py-4 sm:py-6 px-2">
-            <IoPerson className="text-2xl sm:text-3xl md:text-4xl text-gray-300 dark:text-gray-600 mx-auto mb-1.5" />
-            <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm md:text-base">{emptyStateMessage || 'Not shared with anyone yet.'}</p>
+          <div className="flex flex-col items-center justify-center py-8 sm:py-10 md:py-12 px-4">
+            <IoPerson className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-gray-300 mb-3" />
+            <p className="text-sm sm:text-base text-gray-500">{emptyStateMessage || 'Not shared with anyone yet'}</p>
           </div>
         );
       } else {
         // viewMode === 'select' - Show available users to share with
         return availableUsers.length > 0 ? (
-          <div className="space-y-1">
+          <div>
             {availableUsers.map(user => (
               <div
                 key={user.id}
                 onClick={() => handleUserSelection(user.id)}
-                className={`flex items-center justify-between gap-2 sm:gap-3 px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded-lg border-b border-gray-100 dark:border-gray-800 last:border-b-0 cursor-pointer ${
-                  selectedUser === user.id ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700' : ''
+                className={`flex items-center justify-between gap-3 px-4 sm:px-5 py-3 sm:py-3.5 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 cursor-pointer ${
+                  selectedUser === user.id ? 'bg-blue-50 border-blue-200' : ''
                 }`}
               >
-                <div className="flex items-center gap-2 sm:gap-2.5 md:gap-3 flex-1 min-w-0">
-                  <div className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <span className="text-primary font-semibold text-xs sm:text-sm md:text-base">{user.name.charAt(0).toUpperCase()}</span>
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <span className="text-primary font-semibold text-sm sm:text-base">{user.name.charAt(0).toUpperCase()}</span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-gray-900 dark:text-white text-xs sm:text-sm md:text-base font-medium truncate">{user.name}</p>
-                    <p className="text-gray-500 dark:text-gray-400 text-[10px] sm:text-xs md:text-sm truncate">{user.email}</p>
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <p className="text-gray-900 text-sm sm:text-base font-medium truncate leading-snug">{user.name}</p>
+                    <p className="text-gray-500 text-xs sm:text-sm break-words overflow-hidden leading-snug mt-0.5" style={{ wordBreak: 'break-word', maxHeight: '2.5em' }}>{user.email}</p>
                   </div>
                 </div>
                 {selectedUser === user.id && (
-                  <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                  <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center shrink-0">
                     <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
@@ -222,9 +223,9 @@ export const ActionCard: React.FC<ActionCardProps> = ({
             ))}
           </div>
         ) : (
-          <div className="text-center py-4 sm:py-6 px-2">
-            <IoPerson className="text-2xl sm:text-3xl md:text-4xl text-gray-300 dark:text-gray-600 mx-auto mb-1.5" />
-            <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm md:text-base">{emptyStateMessage || 'No users available to share with.'}</p>
+          <div className="flex flex-col items-center justify-center py-8 sm:py-10 md:py-12 px-4">
+            <IoPerson className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-gray-300 mb-3" />
+            <p className="text-sm sm:text-base text-gray-500">{emptyStateMessage || 'No users available to share with'}</p>
           </div>
         );
       }
@@ -239,19 +240,19 @@ export const ActionCard: React.FC<ActionCardProps> = ({
     if (suggestions.length === 0) return null;
     
     return (
-      <div className="absolute top-full left-0 right-0 mt-0.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-40 overflow-y-auto z-50">
+      <div className="absolute top-full left-0 right-0 mt-0.5 bg-white  border border-gray-200  rounded-md shadow-lg max-h-40 overflow-y-auto z-50">
         {suggestions.map(user => (
           <div
             key={user.id}
             onClick={() => handleUserSelection(user.id, user.name)}
-            className="flex items-center gap-1 px-1.5 py-1 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+            className="flex items-center gap-1 px-1.5 py-1 hover:bg-gray-50 cursor-pointer transition-colors"
           >
             <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
               <span className="text-primary font-semibold text-[9px]">{user.name.charAt(0).toUpperCase()}</span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-gray-900 dark:text-white text-[10px] font-medium truncate">{user.name}</p>
-              <p className="text-gray-500 dark:text-gray-400 text-[8px] truncate">{user.email}</p>
+              <p className="text-gray-900 text-[10px] font-medium truncate">{user.name}</p>
+              <p className="text-gray-500 text-[8px] truncate">{user.email}</p>
             </div>
             {user.status && getStatusBadge(user.status)}
           </div>
@@ -261,46 +262,46 @@ export const ActionCard: React.FC<ActionCardProps> = ({
   };
 
   return (
-    <div className="relative flex flex-col bg-white dark:bg-gray-900 rounded-lg shadow-2xl w-full max-w-[280px] sm:max-w-[420px] md:max-w-[520px] lg:max-w-[580px] mx-auto my-1 sm:my-2 max-h-[90vh] sm:max-h-[80vh] overflow-hidden">
-      <div className="px-3 py-2.5 sm:px-4 sm:py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
+    <div className="relative flex flex-col bg-white rounded-2xl shadow-2xl w-[92vw] sm:w-[80vw] md:max-w-md lg:max-w-lg xl:max-w-xl mx-auto my-3 sm:my-4 max-h-[90vh] sm:max-h-[85vh] overflow-hidden">
+      <div className="px-4 py-3 sm:px-5 sm:py-4 border-b border-gray-200 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
           {mode === 'share' && viewMode === 'select' && (
-            <button onClick={handleBackToView} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors shrink-0">
-              <IoArrowBack className="text-gray-600 dark:text-gray-300 w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <button onClick={handleBackToView} className="p-1.5 hover:bg-gray-100 rounded-full transition-colors shrink-0">
+              <IoArrowBack className="text-gray-600 w-5 h-5" />
             </button>
           )}
-          <h1 className="text-gray-900 dark:text-white text-xs sm:text-sm md:text-base font-semibold truncate">
+          <h1 className="text-gray-900 text-base sm:text-lg font-semibold truncate">
             {mode === 'share' && viewMode === 'select' ? 'Select a User to Share' : title}
           </h1>
         </div>
-        <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors shrink-0">
-          <IoClose className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 dark:text-gray-400"/>
+        <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-full transition-colors shrink-0">
+          <IoClose className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500"/>
         </button>
       </div>
 
       {(mode === 'approve' || viewMode === 'select') && (
-        <div className="px-3 sm:px-4 py-2 sm:py-2.5 border-b border-gray-200 dark:border-gray-700">
+        <div className="px-4 sm:px-5 py-3 sm:py-3.5 border-b border-gray-200 bg-gray-50/50">
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 sm:pl-3.5 pointer-events-none">
-              <IoSearch className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-gray-400" />
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+              <IoSearch className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
             </div>
             <input
               type="text"
               value={searchQuery}
               onChange={handleSearchChange}
               onFocus={() => setShowSuggestions(true)}
-              className="w-full h-9 sm:h-10 md:h-11 rounded-full text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 placeholder:text-gray-500 dark:placeholder:text-gray-400 pl-9 sm:pl-10 md:pl-11 pr-9 sm:pr-10 text-xs sm:text-sm md:text-base"
+              className="w-full h-10 sm:h-11 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary border border-gray-300 bg-white placeholder:text-gray-400 pl-10 sm:pl-11 pr-10 text-sm sm:text-base shadow-sm transition-all"
               placeholder={searchPlaceholder}
             />
             {searchQuery && (
-              <button onClick={clearSearch} className="absolute inset-y-0 right-0 flex items-center pr-2.5 sm:pr-3 cursor-pointer text-gray-500 hover:text-gray-800 dark:hover:text-gray-300">
-                <IoClose className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              <button onClick={clearSearch} className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer text-gray-400 hover:text-gray-700 transition-colors">
+                <IoClose className="w-5 h-5" />
               </button>
             )}
             {renderAutocompleteSuggestions()}
           </div>
           {validationError && (
-            <p className="text-[10px] sm:text-xs md:text-sm text-red-600 dark:text-red-400 mt-1.5 ml-1">{validationError}</p>
+            <p className="text-xs sm:text-sm text-red-600 mt-2 ml-1">{validationError}</p>
           )}
         </div>
       )}
@@ -315,17 +316,17 @@ export const ActionCard: React.FC<ActionCardProps> = ({
         )}
       </div>
 
-      <div className="flex justify-end gap-2 sm:gap-2.5 px-3 py-2.5 sm:px-4 sm:py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50/75 dark:bg-gray-800/50">
+      <div className="flex justify-end gap-2 sm:gap-3 px-4 py-3 sm:px-5 sm:py-4 border-t border-gray-200 bg-gray-50/50">
         <button
           onClick={viewMode === 'select' ? handleBackToView : onClose}
-          className="px-4 sm:px-5 md:px-6 py-1.5 sm:py-2 text-xs sm:text-sm md:text-base font-medium rounded-full text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors shadow-sm"
+          className="px-5 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base font-medium rounded-lg text-gray-700 bg-white border border-gray-300 hover:bg-gray-100 transition-all shadow-sm"
         >
           {viewMode === 'select' ? 'Cancel' : 'Close'}
         </button>
         {mode === 'share' && viewMode === 'view' && (
           <button
             onClick={handleShareClick}
-            className="px-4 sm:px-5 md:px-6 py-1.5 sm:py-2 text-xs sm:text-sm md:text-base font-medium rounded-full bg-primary text-white hover:bg-primary/90 transition-colors shadow-sm"
+            className="px-5 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base font-medium rounded-lg bg-primary text-white hover:bg-primary/90 transition-all shadow-sm"
           >
             Share with User
           </button>
@@ -334,7 +335,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
           <button
             onClick={handleConfirmShare}
             disabled={!selectedUser || isLoading}
-            className="px-4 sm:px-5 md:px-6 py-1.5 sm:py-2 text-xs sm:text-sm md:text-base font-medium rounded-full bg-primary text-white hover:bg-primary/90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+            className="px-5 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base font-medium rounded-lg bg-primary text-white hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
           >
             Share
           </button>

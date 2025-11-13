@@ -7,6 +7,7 @@ import { toast } from '../../../common/utils/toast';
 import { formatLastLogin } from '../../../utils/formatLastLogin';
 import { useAuth } from '../../../common/hooks/useAuth';
 import { ShowcaseContainer } from '../Components/ShowcaseContainer';
+import { shouldShowError, getErrorMessage } from '../../../utils/errorHandler';
 
 export const UserDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -61,7 +62,9 @@ export const UserDashboard: React.FC = () => {
       console.error('Failed to fetch stats:', error);
       console.error('Error details:', error.response?.data);
       setStatsError(true);
-      toast.error(error.response?.data?.message || 'Failed to load statistics');
+      if (shouldShowError(error)) {
+        toast.error(getErrorMessage(error, 'Failed to load statistics'));
+      }
     } finally {
       setStatsLoading(false);
     }
@@ -75,7 +78,9 @@ export const UserDashboard: React.FC = () => {
       setCredentials(response.data.credentials);
     } catch (error: any) {
       console.error('Failed to fetch credentials:', error);
-      toast.error(error.response?.data?.message || 'Failed to load credentials');
+      if (shouldShowError(error)) {
+        toast.error(getErrorMessage(error, 'Failed to load credentials'));
+      }
     } finally {
       setCredentialsLoading(false);
     }

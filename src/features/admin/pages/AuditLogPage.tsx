@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { adminApi, activityLogUtils, type Activity } from "../api/adminApi";
 import { RecentActivityCard } from "../../../common/components/RecentActivityCard";
 import { toast } from '../../../common/utils/toast';
+import { shouldShowError, getErrorMessage } from '../../../utils/errorHandler';
 
 
 /**
@@ -44,7 +45,9 @@ export const AuditLogPage: React.FC = () => {
       setTotalRecords(response.pagination?.total || 0);
       return true;
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to load activity logs");
+      if (shouldShowError(err)) {
+        toast.error(getErrorMessage(err, "Failed to load activity logs"));
+      }
       setActivities([]);
       setTotalRecords(0);
       return false;
