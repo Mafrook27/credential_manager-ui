@@ -1,17 +1,23 @@
 // src/common/components/CredentialCard/CredentialCard.tsx
 
 import React, { useState } from 'react';
-import { MdDelete, MdVisibility, MdContentCopy, MdEdit, MdShare } from 'react-icons/md';
-import { getInitials } from '../../utils/activityHelpers';
+import { MdDelete, MdVisibility, MdContentCopy, MdEdit, MdShare, MdMoreVert, MdVisibilityOff, MdKey, MdPerson } from 'react-icons/md';
 import { ActionCard } from '../ActionCard';
 import type { User } from '../../../features/admin/types/user.types';
+
+export interface CredentialField {
+  id: string;
+  key: string;
+  value: string;
+}
 
 export interface CredentialCardProps {
   id: string;
   serviceName: string;
   credentialName?: string;
-  username: string;
-  password: string;
+  fields?: CredentialField[];  // Dynamic fields array
+  username?: string;  // Legacy support
+  password?: string;  // Legacy support
   url?: string;
   notes?: string;
   sharedWith?: Array<{ _id: string; name: string; email: string }>;
@@ -22,19 +28,23 @@ export interface CredentialCardProps {
   onShare?: (credentialId: string, userId: string) => void;
   onRevoke?: (credentialId: string, userId: string) => void;
   onShowDetails?: (id: string) => void;
-  onDecrypt?: (id: string) => Promise<{ username: string; password: string }>;
+  onDecrypt?: (id: string) => Promise<{ fields?: CredentialField[]; username?: string; password?: string }>;
   availableUsers?: User[];
   onSearchUsers?: (query: string) => void;
   isLoadingUsers?: boolean;
+  // State management for closing other cards
+  onCardInteraction?: (cardId: string) => void;
+  shouldResetState?: boolean;
 }
 
 /**
- * Reusable Credential Card Component - Modern Design matching the image
+ * Reusable Credential Card Component - credential-manager (1) style with React icons
  */
 export const CredentialCard: React.FC<CredentialCardProps> = ({
   id,
   serviceName,
   credentialName,
+  fields: propFields,
   username,
   url,
   notes,
@@ -48,16 +58,52 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
   availableUsers = [],
   onSearchUsers,
   isLoadingUsers = false,
+  onCardInteraction,
+  shouldResetState = false,
 }) => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [decryptedUsername, setDecryptedUsername] = useState<string | null>(null);
-  const [decryptedPassword, setDecryptedPassword] = useState<string | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [areFieldsVisible, setAreFieldsVisible] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [decryptedFields, setDecryptedFields] = useState<CredentialField[]>([]);
   const [isDecrypting, setIsDecrypting] = useState(false);
   const [isDecrypted, setIsDecrypted] = useState(false);
 
-  const initials = getInitials(serviceName);
+  // Reset state when shouldResetState changes
+  React.useEffect(() => {
+    if (shouldResetState) {
+      setIsMenuOpen(false);
+      setAreFieldsVisible(false);
+    }
+  }, [shouldResetState]);
+
+  // Close menu when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isMenuOpen) {
+        const target = event.target as HTMLElement;
+        if (!target.closest('.credential-card-menu')) {
+          setIsMenuOpen(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMenuOpen]);
+
+  const COLLAPSE_THRESHOLD = 3;
+  
+  // Use provided fields or convert legacy username/password to fields array format
+  const displayFields: CredentialField[] = propFields || [
+    { id: 'username', key: 'username', value: username || '' },
+    { id: 'password', key: 'password', value: '••••••••••••' }
+  ];
+  
+  const fieldsToShow = isExpanded ? displayFields : displayFields.slice(0, COLLAPSE_THRESHOLD);
+  const hiddenFieldsCount = displayFields.length - COLLAPSE_THRESHOLD;
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -69,8 +115,7 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
     if (isDecrypted) {
       // Hide decrypted values
       setIsDecrypted(false);
-      setDecryptedUsername(null);
-      setDecryptedPassword(null);
+      setDecryptedFields([]);
       return;
     }
 
@@ -79,8 +124,22 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
     setIsDecrypting(true);
     try {
       const decrypted = await onDecrypt(id);
-      setDecryptedUsername(decrypted.username);
-      setDecryptedPassword(decrypted.password);
+      
+      // Handle both new fields format and legacy username/password
+      if (decrypted.fields) {
+        setDecryptedFields(decrypted.fields);
+      } else if (decrypted.username || decrypted.password) {
+        // Convert legacy format to fields
+        const legacyFields: CredentialField[] = [];
+        if (decrypted.username) {
+          legacyFields.push({ id: 'username', key: 'username', value: decrypted.username });
+        }
+        if (decrypted.password) {
+          legacyFields.push({ id: 'password', key: 'password', value: decrypted.password });
+        }
+        setDecryptedFields(legacyFields);
+      }
+      
       setIsDecrypted(true);
     } catch (error) {
       console.error('Failed to decrypt credentials:', error);
@@ -92,109 +151,158 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
 
   return (
     <>
-      {/* Card - Compact Square Design */}
-      <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden w-full border border-blue-100">
-        {/* Blue Header Bar */}
-        <div className="h-1.5 bg-blue-600"></div>
-        
-        <div className="p-3">
-          {/* Header with Service Name */}
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-md flex-shrink-0">
-                <span className="text-white font-bold text-xs">{initials}</span>
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="font-semibold text-gray-900 text-sm truncate">{serviceName}</h3>
+      {/* Card - Professional Design */}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md flex flex-col border border-gray-200">
+        {/* Header */}
+        <header className="px-3 py-2.5 bg-white border-b border-gray-200 flex items-start justify-between gap-2">
+          <div className="flex items-start gap-2.5 min-w-0 flex-1">
+            <div className="w-9 h-9 rounded-lg bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <MdKey className="w-4 h-4 text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-bold text-gray-900 truncate leading-tight" title={serviceName}>{serviceName}</h3>
+              <div className="flex items-center gap-3 mt-1 mb-3">
+                {credentialName && (
+                  <p className="text-xs mb-3 text-gray-500 truncate" title={credentialName}>{credentialName}</p>
+                )}
                 {sharedWith && sharedWith.length > 0 && (
-                  <div className="flex items-center gap-0.5 text-blue-600 text-xs font-medium">
-                    <MdShare size={10} />
-                    <span className="text-xs">{sharedWith.length}</span>
+                  <div className="flex mb-3 items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full flex-shrink-0" title={`Shared with ${sharedWith.length} user(s)`}>
+                    <MdPerson className="w-3 h-3" />
+                    <span className="font-medium">{sharedWith.length}</span>
                   </div>
                 )}
               </div>
             </div>
           </div>
-
-          {/* Credential Name / Sub Instance */}
-          {credentialName && (
-            <div className="mb-2 pb-2 border-b border-gray-100">
-              <p className="text-md text-bold  text-gray-600 truncate">{credentialName}</p>
+          {/* Only show menu if there are actions available */}
+          {(onEdit || onShare || onDelete) && (
+            <div className="relative flex-shrink-0 credential-card-menu">
+              <button 
+                onClick={() => {
+                  onCardInteraction?.(id);
+                  setIsMenuOpen(!isMenuOpen);
+                }} 
+                className="text-gray-400 hover:text-gray-600 p-1 hover:bg-gray-50 rounded"
+              >
+                <MdMoreVert className="w-4 h-4"/>
+              </button>
+              {isMenuOpen && (
+                <div className="absolute right-0 mt-1 w-36 bg-white rounded-lg shadow-lg z-50 border border-gray-200">
+                  <div className="py-1" role="menu">
+                    {onEdit && (
+                      <button
+                        onClick={() => { onEdit(id); setIsMenuOpen(false); }}
+                        className="flex items-center gap-2 w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+                      >
+                        <MdEdit className="w-3.5 h-3.5 text-gray-500"/>
+                        <span>Edit</span>
+                      </button>
+                    )}
+                    {onShare && (
+                      <button
+                        onClick={() => { setShowShareModal(true); setIsMenuOpen(false); }}
+                        className="flex items-center gap-2 w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+                      >
+                        <MdShare className="w-3.5 h-3.5 text-gray-500"/>
+                        <span>Share</span>
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button
+                        onClick={() => setShowDeleteModal(true)}
+                        className="flex items-center gap-2 w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50"
+                      >
+                        <MdDelete className="w-3.5 h-3.5"/>
+                        <span>Delete</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
+        </header>
 
-          {/* Credentials Section */}
-          <div className="space-y-1.5">
-            {/* Username */}
-            <div>
-              <p className="text-sm text-gray-500 font-medium mb-0.5">Username</p>
-              <div className="bg-gray-50 rounded px-2 py-1 border border-gray-100">
-                <p className="text-sm text-gray-900 font-medium truncate">
-                  {isDecrypted && decryptedUsername ? decryptedUsername : username}
-                </p>
-              </div>
-            </div>
-
-            {/* Password - Flat Display */}
-            <div>
-              <p className="text-sm text-gray-500 font-medium mb-0.5">Password</p>
-              <div className="bg-gray-50 rounded px-2 py-1 border border-gray-100">
-                <p className="text-sm font-mono text-gray-900 truncate">
-                  {isDecrypted && decryptedPassword ? decryptedPassword : '••••••••••••'}
-                </p>
-              </div>
-            </div>
-
-            {/* Decrypt Button on Card */}
-            {onDecrypt && (
-              <button
-                onClick={handleDecrypt}
-                disabled={isDecrypting}
-                className="w-full py-1.5 px-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all duration-200 font-medium text-sm shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isDecrypting ? 'Decrypting...' : isDecrypted ? 'Hide' : 'Decrypt'}
-              </button>
-            )}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-1.5 mt-2.5 pt-2.5 border-t border-gray-100">
-            <button
-              onClick={() => setShowDetailsModal(true)}
-              className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all duration-200 font-medium text-sm shadow-sm"
-            >
-              <MdVisibility size={14} />
-              <span>View</span>
-            </button>
-            {onEdit && (
-              <button
-                onClick={() => onEdit(id)}
-                className="p-1.5 border border-gray-300 text-gray-600 rounded-md hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
-                title="Edit"
-              >
-                <MdEdit size={14} />
-              </button>
-            )}
-            {onShare && (
-              <button
-                onClick={() => setShowShareModal(true)}
-                className="p-1.5 border border-gray-300 text-gray-600 rounded-md hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
-                title="Share"
-              >
-                <MdShare size={14} />
-              </button>
-            )}
-            {onDelete && (
-              <button
-                onClick={() => setShowDeleteModal(true)}
-                className="p-1.5 border border-red-200 text-red-600 rounded-md hover:bg-red-50 hover:border-red-300 transition-all duration-200"
-                title="Delete"
-              >
-                <MdDelete size={14} />
-              </button>
-            )}
-          </div>
+        {/* Fields - Compact Table */}
+        <div className="px-3 py-2 flex-grow">
+          <table className="w-full table-fixed">
+            <tbody>
+              {fieldsToShow.map(field => {
+                const decryptedField = decryptedFields.find(f => f.key === field.key);
+                const displayValue = areFieldsVisible && isDecrypted && decryptedField 
+                  ? decryptedField.value 
+                  : field.value;
+                
+                return (
+                  <tr key={field.id}>
+                    <td className="py-1.5 pr-3 text-xs font-medium text-gray-600 w-[30%] align-middle">
+                      <div className="truncate" title={field.key}>{field.key}</div>
+                    </td>
+                    <td className="py-1.5 px-2 text-xs text-gray-900 font-mono w-[52%] align-middle">
+                      <div 
+                        className={`${areFieldsVisible && isDecrypted ? '' : 'truncate'}`}
+                        title={displayValue}
+                        style={areFieldsVisible && isDecrypted ? { 
+                          wordBreak: 'break-word', 
+                          overflowWrap: 'break-word',
+                          maxWidth: '100%'
+                        } : {}}
+                      >
+                        {displayValue}
+                      </div>
+                    </td>
+                    <td className="py-1.5 pl-2 w-[18%] align-middle">
+                      <div className="flex items-center gap-1 justify-end">
+                        <button 
+                          onClick={async () => {
+                            onCardInteraction?.(id);
+                            if (!isDecrypted && onDecrypt) {
+                              await handleDecrypt();
+                            }
+                            setAreFieldsVisible(!areFieldsVisible);
+                          }} 
+                          className="p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded"
+                          title={areFieldsVisible ? "Hide" : "Show"}
+                        >
+                          {areFieldsVisible ? <MdVisibilityOff className="w-3.5 h-3.5"/> : <MdVisibility className="w-3.5 h-3.5"/>}
+                        </button>
+                        <button 
+                          onClick={() => {
+                            const valueToCopy = decryptedField?.value || field.value;
+                            handleCopy(valueToCopy);
+                          }} 
+                          className="p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded"
+                          title="Copy"
+                        >
+                          <MdContentCopy className="w-3.5 h-3.5"/>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
+
+        {/* Expand/Collapse */}
+        {displayFields.length > COLLAPSE_THRESHOLD && (
+          <div className="px-3 pb-2">
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="w-full text-center text-xs font-medium text-blue-600 hover:text-blue-700 py-1.5 hover:bg-blue-50 rounded"
+            >
+              {isExpanded ? 'Show Less ▲' : `Show ${hiddenFieldsCount} more ▼`}
+            </button>
+          </div>
+        )}
+         
+        {/* Footer */}
+        <footer className="px-3 py-2 bg-gray-50 border-t border-gray-200">
+          <button onClick={() => setShowDetailsModal(true)} className="text-xs font-medium text-blue-600 hover:text-blue-700">
+            View Details
+          </button>
+        </footer>
       </div>
 
       {/* Details Modal */}
@@ -213,14 +321,9 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-gray-200">
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                  <span className="text-white font-bold text-xs sm:text-sm">{initials}</span>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-base sm:text-lg font-bold text-gray-900 truncate">{serviceName}</h2>
-                  <p className="text-xs text-gray-500 truncate">{credentialName || 'Credential Details'}</p>
-                </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base sm:text-lg font-bold text-gray-900 truncate">{serviceName}</h2>
+                <p className="text-xs text-gray-500 truncate">{credentialName || 'Credential Details'}</p>
               </div>
               <button
                 onClick={() => setShowDetailsModal(false)}
@@ -252,45 +355,35 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
                 </div>
               )}
 
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-xs text-gray-500 font-medium">Username</p>
-                  {isDecrypted && decryptedUsername && (
-                    <button
-                      onClick={() => handleCopy(decryptedUsername)}
-                      className="text-blue-600 text-xs font-medium hover:text-blue-700 transition-colors flex items-center gap-1"
-                    >
-                      <MdContentCopy size={14} />
-                      <span>Copy</span>
-                    </button>
-                  )}
-                </div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2.5 border border-gray-100">
-                  <p className="text-sm text-gray-900 font-medium break-all">
-                    {isDecrypted && decryptedUsername ? decryptedUsername : username}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-xs text-gray-500 font-medium">Password</p>
-                  {isDecrypted && decryptedPassword && (
-                    <button
-                      onClick={() => handleCopy(decryptedPassword)}
-                      className="text-blue-600 text-xs font-medium hover:text-blue-700 transition-colors flex items-center gap-1"
-                    >
-                      <MdContentCopy size={14} />
-                      <span>Copy</span>
-                    </button>
-                  )}
-                </div>
-                <div className="bg-gray-50 rounded-lg px-3 py-2.5 border border-gray-100">
-                  <p className="text-sm font-mono text-gray-900 break-all">
-                    {isDecrypted && decryptedPassword ? decryptedPassword : '•'.repeat(12)}
-                  </p>
-                </div>
-              </div>
+              {/* Dynamic Fields Display */}
+              {displayFields.map(field => {
+                const decryptedField = decryptedFields.find(f => f.key === field.key);
+                const displayValue = isDecrypted && decryptedField 
+                  ? decryptedField.value 
+                  : (field.key === 'password' ? '•'.repeat(12) : field.value);
+                
+                return (
+                  <div key={field.id}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="text-xs text-gray-500 font-medium capitalize">{field.key}</p>
+                      {isDecrypted && decryptedField && (
+                        <button
+                          onClick={() => handleCopy(decryptedField.value)}
+                          className="text-blue-600 text-xs font-medium hover:text-blue-700 transition-colors flex items-center gap-1"
+                        >
+                          <MdContentCopy size={14} />
+                          <span>Copy</span>
+                        </button>
+                      )}
+                    </div>
+                    <div className="bg-gray-50 rounded-lg px-3 py-2.5 border border-gray-100">
+                      <p className={`text-sm text-gray-900 break-all ${field.key === 'password' ? 'font-mono' : 'font-medium'}`}>
+                        {displayValue}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
 
               {/* Notes Section - Above URL */}
               {notes && (
@@ -316,16 +409,13 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
                 </div>
               )}
 
-              {/* Shared With Section - Between URL and Created By */}
+              {/* Shared With Section */}
               {sharedWith && sharedWith.length > 0 && (
                 <div>
                   <p className="text-xs sm:text-sm text-gray-500 font-semibold mb-2">Shared With ({sharedWith.length})</p>
                   <div className="space-y-2">
                     {sharedWith.map((user) => (
                       <div key={user._id} className="flex items-center gap-2 sm:gap-3 bg-gray-50 rounded-lg px-2.5 sm:px-3 py-2 sm:py-2.5 border border-gray-200">
-                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0 shadow-sm">
-                          {getInitials(user.name)}
-                        </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{user.name}</p>
                           <p className="text-xs text-gray-500 truncate">{user.email}</p>
@@ -340,9 +430,6 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
                 <div>
                   <p className="text-xs sm:text-sm text-gray-500 font-semibold mb-2">Created By</p>
                   <div className="flex items-center gap-2 sm:gap-3 bg-gray-50 rounded-lg px-2.5 sm:px-3 py-2 sm:py-2.5 border border-gray-200">
-                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-gray-400 to-gray-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-                      {getInitials(createdBy.name)}
-                    </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{createdBy.name}</p>
                       <p className="text-xs text-gray-500 truncate">{createdBy.email}</p>

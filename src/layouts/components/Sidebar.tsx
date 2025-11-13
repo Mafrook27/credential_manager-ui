@@ -1,44 +1,33 @@
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Drawer } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import { 
-  MdDashboard, 
-  MdVpnKey, 
-  MdPerson,
-  MdAdminPanelSettings,
-  MdClose
-} from 'react-icons/md';
-import { 
-  FaUsers, 
-  FaKey, 
-  FaLock, 
-  FaHistory
-} from 'react-icons/fa';
-import { IoShieldCheckmark } from 'react-icons/io5';
+import { MdDashboard, MdVpnKey, MdPerson, MdAdminPanelSettings, MdClose } from 'react-icons/md';
+import { FaUsers, FaKey, FaLock, FaHistory } from 'react-icons/fa';
 import { useAuth } from '../../common/hooks/useAuth';
-import styles from './Customcss/Sidebar.module.css';
 
 interface SidebarProps {
-  isOpen: boolean;
+  isExpanded: boolean;
+  activePath: string;
+  onNavigate: (path: string) => void;
   onClose: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+interface NavItemType {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  path: string;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isExpanded, activePath, onNavigate, onClose }) => {
   const { isAdmin } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const theme = useTheme();
 
   // User Panel Menu
-  const userMenuItems = [
+  const userMenuItems: NavItemType[] = [
     { icon: MdDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: MdVpnKey, label: 'Credentials', path: '/credentials' },
     { icon: MdPerson, label: 'Profile', path: '/profile' },
   ];
 
   // Admin Panel Menu
-  const adminMenuItems = [
+  const adminMenuItems: NavItemType[] = [
     { icon: MdAdminPanelSettings, label: 'Admin Dashboard', path: '/admin/dashboard' },
     { icon: FaUsers, label: 'User Management', path: '/admin/users' },
     { icon: FaKey, label: 'All Credentials', path: '/admin/credentials' },
@@ -46,79 +35,73 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { icon: FaHistory, label: 'Audit Logs', path: '/admin/audit-logs' },
   ];
 
-  const currentMenuItems = isAdmin ? adminMenuItems : userMenuItems;
-
-  const handleNavigation = (path: string) => {
-    navigate(path);
-    onClose();
-  };
+  const navItems = isAdmin ? adminMenuItems : userMenuItems;
 
   return (
-    <Drawer
-      anchor="left"
-      open={isOpen}
-      onClose={onClose}
-      sx={{
-        '& .MuiDrawer-paper': {
-          width: 280,
-          boxSizing: 'border-box',
-        },
-      }}
-    >
-      <div className={`d-flex flex-column h-100 bg-white ${styles.sidebar}`}>
-        <div className="d-flex align-items-center justify-content-between p-3 border-bottom">
-          <div className="d-flex ms-3 align-items-left gap-2">
-            {isAdmin ? (
-              <>
-                <MdAdminPanelSettings className="text-danger fs-4" />
-                <span className="fw-bold text-dark">Admin Panel</span>
-              </>
-            ) : (
-              <>
-                <IoShieldCheckmark className="fs-4" style={{ color: theme.palette.primary.main }} />
-                <span className="fw-bold text-dark">SparkLMS</span>
-              </>
-            )}
+    <aside className={`h-full bg-white flex flex-col transition-all duration-300 ease-in-out border-r border-gray-200 ${isExpanded ? 'w-64' : 'w-[72px]'}`}>
+      {/* Header */}
+      <div className={`flex items-center h-16 px-4 shrink-0 ${isExpanded ? 'justify-between' : 'justify-center'}`}>
+        {isExpanded && (
+          <div className="flex items-center gap-3">
+            <MdAdminPanelSettings className="w-6 h-6 text-red-500" />
+            <span className="font-bold text-lg text-gray-800">
+              {isAdmin ? 'Admin Panel' : 'User Panel'}
+            </span>
           </div>
-          
-          <button
-            onClick={onClose}
-            className={`btn btn-sm btn-light rounded-circle p-0 ${styles.closeButton}`}
-          >
-            <MdClose size={20} />
-          </button>
-        </div>
-
-        <nav className={`p-3 ${styles.sidebarNav}`}>
-          <ul className="list-unstyled mb-0">
-            {currentMenuItems.map((item) => {
-              const isActive = location.pathname === item.path;
-              const Icon = item.icon;
-              
-              return (
-                <li key={item.path} className="mb-2">
-                  <button
-                    onClick={() => handleNavigation(item.path)}
-                    className={`
-                      btn w-100 d-flex justify-content-start gap-3 py-2 px-3 border-0 rounded
-                      ${styles.menuItem}
-                      ${isActive ? styles.menuItemActive : ''}
-                    `}
-                    style={isActive ? {
-                      backgroundColor: theme.palette.primary.main,
-                      color: 'white'
-                    } : {}}
-                  >
-                    <Icon size={20} />
-                    <span className="fw-medium">{item.label}</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
+        )}
+        <button 
+          onClick={onClose}
+          className="p-2 rounded-full hover:bg-gray-100 md:hidden"
+          aria-label="Close sidebar"
+        >
+          <MdClose className="w-6 h-6 text-gray-600" />
+        </button>
       </div>
-    </Drawer>
+
+      {/* Navigation */}
+      <nav className="flex-1 p-2 space-y-4">
+        {navItems.map((item) => (
+          <NavItem
+            key={item.path}
+            item={item}
+            isExpanded={isExpanded}
+            isActive={activePath === item.path}
+            onClick={() => onNavigate(item.path)}
+          />
+        ))}
+      </nav>
+    </aside>
+  );
+};
+
+interface NavItemProps {
+  item: NavItemType;
+  isExpanded: boolean;
+  isActive: boolean;
+  onClick: () => void;
+}
+
+const NavItem: React.FC<NavItemProps> = ({ item, isExpanded, isActive, onClick }) => {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center h-10 px-3 gap-3 transition-colors duration-200 rounded-md ${
+        isActive 
+          ? 'bg-blue-50 text-blue-600 font-semibold' 
+          : 'text-gray-700 hover:bg-gray-100'
+      } ${
+        !isExpanded && 'justify-center'
+      }`}
+      aria-label={item.label}
+      aria-current={isActive ? 'page' : undefined}
+    >
+      <item.icon className="w-5 h-5 shrink-0" />
+      {isExpanded && (
+        <span className="text-sm truncate flex-1 text-left">
+          {item.label}
+        </span>
+      )}
+    </button>
   );
 };
 

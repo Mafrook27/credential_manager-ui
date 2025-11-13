@@ -4,7 +4,7 @@ import { ConfirmModal } from '../../../../common/components/ConfirmModal';
 import { IoEyeOutline, IoEyeOffOutline, IoPersonAddOutline } from 'react-icons/io5';
 import { toast } from '../../../../common/utils/toast';
 import { adminApi } from '../../api/adminApi';
-import { shouldShowError, getErrorMessage } from '../../../../utils/errorHandler';
+import { shouldShowError, getErrorMessage } from '../../../../common/utils/errorHandler';
 
   
 interface AddUserModalProps {

@@ -7,7 +7,7 @@ import { toast } from '../../../common/utils/toast';
 import { formatLastLogin } from '../../../utils/formatLastLogin';
 import { useAuth } from '../../../common/hooks/useAuth';
 import { ShowcaseContainer } from '../Components/ShowcaseContainer';
-import { shouldShowError, getErrorMessage } from '../../../utils/errorHandler';
+import { shouldShowError, getErrorMessage } from '../../../common/utils/errorHandler';
 
 export const UserDashboard: React.FC = () => {
   const { user } = useAuth();

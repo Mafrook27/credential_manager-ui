@@ -35,6 +35,7 @@ const axiosInstance = axios.create({
 
 // Track if we're currently refreshing to prevent multiple refresh calls
 let isRefreshing = false;
+let refreshPromise: Promise<any> | null = null;
 let failedQueue: Array<{
   resolve: (value?: unknown) => void;
   reject: (reason?: unknown) => void;
@@ -51,6 +52,15 @@ const processQueue = (error: Error | null = null) => {
       promise.resolve();
     }
   });
+  failedQueue = [];
+};
+
+/**
+ * Reset refresh state (called on logout)
+ */
+export const resetRefreshState = () => {
+  isRefreshing = false;
+  refreshPromise = null;
   failedQueue = [];
 };
 
@@ -109,57 +119,68 @@ axiosInstance.interceptors.response.use(
       if (errorData.code === 'TOKEN_EXPIRED' && !originalRequest._retry) {
         console.log('🔄 Access token expired, attempting refresh...');
         
-        // If already refreshing, queue this request
-        if (isRefreshing) {
-          console.log('⏳ Refresh already in progress, queuing request:', originalRequest.url);
-          return new Promise((resolve, reject) => {
-            failedQueue.push({ resolve, reject });
-          })
-            .then(() => {
-              console.log('✅ Queued request retrying:', originalRequest.url);
-              return axiosInstance(originalRequest);
-            })
-            .catch(err => Promise.reject(err));
+        // If already refreshing, wait for the existing refresh promise
+        if (isRefreshing && refreshPromise) {
+          console.log('⏳ Refresh already in progress, waiting for completion:', originalRequest.url);
+          try {
+            await refreshPromise;
+            console.log('✅ Refresh completed, retrying request:', originalRequest.url);
+            return axiosInstance(originalRequest);
+          } catch (err) {
+            return Promise.reject(err);
+          }
         }
 
         originalRequest._retry = true;
         isRefreshing = true;
 
-        try {
-          console.log('🔑 Calling refresh token endpoint...');
-          const refreshResponse = await axiosInstance.post('/auth/refresh');
-          console.log('✅ Token refresh successful!', refreshResponse.data);
-          
-          // Token refreshed successfully, process queued requests
-          console.log(`📦 Processing ${failedQueue.length} queued requests`);
-          processQueue();
-          isRefreshing = false;
+        // Create a single refresh promise that all requests can wait for
+        refreshPromise = (async () => {
+          try {
+            console.log('🔑 Calling refresh token endpoint...');
+            const refreshResponse = await axiosInstance.post('/auth/refresh');
+            console.log('✅ Token refresh successful!', refreshResponse.data);
+            
+            // Token refreshed successfully, process queued requests
+            console.log(`📦 Processing ${failedQueue.length} queued requests`);
+            processQueue();
+            isRefreshing = false;
+            refreshPromise = null;
 
+            return refreshResponse;
+          } catch (refreshError) {
+            console.error('❌ Token refresh failed:', refreshError);
+            
+            // Check if it's a "logged in elsewhere" error
+            const refreshErrorData = (refreshError as any)?.response?.data;
+            const isLoggedInElsewhere = refreshErrorData?.code === 'SESSION_INACTIVE' || 
+                                        refreshErrorData?.message?.includes('logged in from another device');
+            
+            // Refresh failed, clear queue and redirect to login
+            processQueue(refreshError as Error);
+            isRefreshing = false;
+            refreshPromise = null;
+
+            // Mark error as handled (don't show toast in components)
+            (refreshError as any).isAuthError = true;
+            (refreshError as any).handledByInterceptor = true;
+
+            // Force logout with appropriate message
+            if (isLoggedInElsewhere) {
+              forceLogout('Logged in from another device');
+            } else {
+              forceLogout('Session expired');
+            }
+            throw refreshError;
+          }
+        })();
+
+        try {
+          await refreshPromise;
           // Retry the original request
           console.log('🔁 Retrying original request:', originalRequest.url);
           return axiosInstance(originalRequest);
         } catch (refreshError) {
-          console.error('❌ Token refresh failed:', refreshError);
-          
-          // Check if it's a "logged in elsewhere" error
-          const refreshErrorData = (refreshError as any)?.response?.data;
-          const isLoggedInElsewhere = refreshErrorData?.code === 'SESSION_INACTIVE' || 
-                                      refreshErrorData?.message?.includes('logged in from another device');
-          
-          // Refresh failed, clear queue and redirect to login
-          processQueue(refreshError as Error);
-          isRefreshing = false;
-
-          // Mark error as handled (don't show toast in components)
-          (refreshError as any).isAuthError = true;
-          (refreshError as any).handledByInterceptor = true;
-
-          // Force logout with appropriate message
-          if (isLoggedInElsewhere) {
-            forceLogout('Logged in from another device');
-          } else {
-            forceLogout('Session expired');
-          }
           return Promise.reject(refreshError);
         }
       }

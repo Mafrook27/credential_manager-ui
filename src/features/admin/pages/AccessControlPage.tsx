@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { adminApi } from '../api/adminApi';
 import { toast } from '../../../common/utils/toast';
-import { getErrorMessage } from '../../../utils/errorHandler';
+import { getErrorMessage, shouldShowError } from '../../../common/utils/errorHandler';
 import { IoSearch, IoChevronForward, IoChevronDown } from 'react-icons/io5';
 
 // Types based on backend response
@@ -180,10 +180,11 @@ export const AccessControlPage: React.FC = () => {
         setSubInstances(Array.from(allSubs).sort());
       }
     } catch (err) {
-      const errorMessage = getErrorMessage(err, 'Failed to fetch user access');
-      setError(errorMessage);
-      toast.error(errorMessage);
-      // console.error('❌ Fetch error:', err);
+      if (shouldShowError(err)) {
+        const errorMessage = getErrorMessage(err, 'Failed to fetch user access');
+        setError(errorMessage);
+        toast.error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }

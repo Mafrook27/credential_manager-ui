@@ -19,14 +19,19 @@ import { instanceApi } from '../../api/instanceApi';
 import { toast } from '../../utils/toast';
 import GlobalLoader from '../GlobalLoader';
 
+interface CredentialField {
+  id: string;
+  key: string;
+  value: string;
+  showValue?: boolean;
+}
+
 interface FormData {
   serviceId: string | null;
   serviceName: string;
   subInstanceId: string | null;
   subInstanceName: string;
-  username: string;
-  password: string;
-  url: string;
+  fields: CredentialField[];
   notes: string;
 }
 
@@ -55,14 +60,11 @@ export const CredentialFormModal: React.FC<Props> = ({
     serviceName: '',
     subInstanceId: null,
     subInstanceName: '',
-    username: '',
-    password: '',
-    url: '',
+    fields: [{ id: Date.now().toString(), key: '', value: '', showValue: false }],
     notes: '',
   });
 
   // UI state
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -114,18 +116,26 @@ export const CredentialFormModal: React.FC<Props> = ({
             throw new Error('No credential data received from server');
           }
           
-          // Handle both direct fields and nested credentialData
-          const credData = decryptedCred.credentialData || decryptedCred;
+          // Convert backend fields array to form fields with UI state
+          const fieldsArray: CredentialField[] = decryptedCred.fields?.map((field: any, index: number) => ({
+            id: `field-${index}`,
+            key: field.key,
+            value: field.value,
+            showValue: false
+          })) || [];
+          
+          // If no fields, add empty one
+          if (fieldsArray.length === 0) {
+            fieldsArray.push({ id: Date.now().toString(), key: '', value: '', showValue: false });
+          }
           
           setFormData({
             serviceId: initialData.rootInstance?._id || initialData.rootInstance?.rootInstanceId || null,
             serviceName: initialData.rootInstance?.serviceName || '',
             subInstanceId: initialData.subInstance?._id || initialData.subInstance?.subInstanceId || null,
             subInstanceName: initialData.subInstance?.name || '',
-            username: credData.username || '',
-            password: credData.password||'', 
-            url: credData.url || '',
-            notes: credData.notes || '',
+            fields: fieldsArray,
+            notes: decryptedCred.notes || '',
           });
         } catch (err: any) {
           console.error('Failed to decrypt credential:', err);
@@ -314,9 +324,12 @@ export const CredentialFormModal: React.FC<Props> = ({
 
     if (!formData.serviceId) newErrors.service = 'Service is required';
     if (!formData.subInstanceId) newErrors.subInstance = 'Sub-instance is required';
-    if (!formData.username.trim()) newErrors.username = 'Username is required';
-    if (!isEditMode && !formData.password.trim())
-      newErrors.password = 'Password is required';
+    
+    // Validate fields
+    const hasEmptyFields = formData.fields.some(field => !field.key.trim() || !field.value.trim());
+    if (formData.fields.length === 0 || hasEmptyFields) {
+      newErrors.fields = 'All credential fields must have both key and value';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -327,22 +340,26 @@ export const CredentialFormModal: React.FC<Props> = ({
 
     setLoading(true);
     try {
+      // Convert fields array to backend format (array of {key, value})
+      const fieldsArray = formData.fields
+        .filter(field => field.key.trim() && field.value.trim())
+        .map(field => ({
+          key: field.key.trim(),
+          value: field.value
+        }));
+      
       // Different payload for create vs edit
       const payload = isEditMode 
         ? {
             // Edit mode: only send credential fields (no rootId/subId)
-            username: formData.username,
-            password: formData.password,
-            url: formData.url,
+            fields: fieldsArray,
             notes: formData.notes,
           }
         : {
             // Create mode: send everything including rootId/subId
             rootId: formData.serviceId,
             subId: formData.subInstanceId,
-            username: formData.username,
-            password: formData.password,
-            url: formData.url,
+            fields: fieldsArray,
             notes: formData.notes,
           };
 
@@ -354,10 +371,8 @@ export const CredentialFormModal: React.FC<Props> = ({
         const errorMessage = err.response.data.message;
         
         // Map backend errors to form fields
-        if (errorMessage.toLowerCase().includes('username')) {
-          setErrors((prev) => ({ ...prev, username: errorMessage }));
-        } else if (errorMessage.toLowerCase().includes('password')) {
-          setErrors((prev) => ({ ...prev, password: errorMessage }));
+        if (errorMessage.toLowerCase().includes('field')) {
+          setErrors((prev) => ({ ...prev, fields: errorMessage }));
         } else if (errorMessage.toLowerCase().includes('root instance') || errorMessage.toLowerCase().includes('service')) {
           setErrors((prev) => ({ ...prev, service: errorMessage }));
         } else if (errorMessage.toLowerCase().includes('sub-instance') || errorMessage.toLowerCase().includes('folder')) {
@@ -384,9 +399,7 @@ export const CredentialFormModal: React.FC<Props> = ({
       serviceName: '',
       subInstanceId: null,
       subInstanceName: '',
-      username: '',
-      password: '',
-      url: '',
+      fields: [{ id: Date.now().toString(), key: '', value: '', showValue: false }],
       notes: '',
     });
     setErrors({});
@@ -418,7 +431,16 @@ export const CredentialFormModal: React.FC<Props> = ({
           </IconButton>
         </DialogTitle>
 
-        <DialogContent className="p-4 sm:p-6">
+        <DialogContent 
+          className="p-4 sm:p-6"
+          sx={{
+            '&::-webkit-scrollbar': {
+              display: 'none'
+            },
+            '-ms-overflow-style': 'none',
+            'scrollbarWidth': 'none'
+          }}
+        >
           {loading && isEditMode ? (
             <div className="flex items-center justify-center py-8">
                        <GlobalLoader/>
@@ -469,55 +491,87 @@ export const CredentialFormModal: React.FC<Props> = ({
               loading={loadingSubInstances}
             />
 
-            {/* Username */}
-            <TextField
-              fullWidth
-              label="Username"
-              value={formData.username}
-              onChange={(e) =>
-                setFormData({ ...formData, username: e.target.value })
-              }
-              error={!!errors.username}
-              helperText={errors.username}
-              size="small"
-            />
-
-            {/* Password */}
-            <TextField
-              fullWidth
-              label={isEditMode ? 'New Password (leave same to keep current)' : 'Password'}
-              type={showPassword ? 'text' : 'password'}
-              value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
-              error={!!errors.password}
-              helperText={errors.password}
-              size="small"
-              InputProps={{
-                endAdornment: (
-                  <IconButton
-                    onClick={() => setShowPassword(!showPassword)}
-                    edge="end"
+            {/* Dynamic Credential Fields */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-700">Credential Fields</label>
+                <Button
+                  size="small"
+                  onClick={() => {
+                    setFormData(prev => ({
+                      ...prev,
+                      fields: [...prev.fields, { id: Date.now().toString(), key: '', value: '', showValue: false }]
+                    }));
+                  }}
+                  variant="outlined"
+                  sx={{ textTransform: 'none' }}
+                >
+                  + Add Field
+                </Button>
+              </div>
+              
+              {formData.fields.map((field, index) => (
+                <div key={field.id} className="flex gap-2 items-start">
+                  <TextField
+                    label="Key"
+                    value={field.key}
+                    onChange={(e) => {
+                      const newFields = [...formData.fields];
+                      newFields[index].key = e.target.value;
+                      setFormData({ ...formData, fields: newFields });
+                    }}
                     size="small"
-                  >
-                    {showPassword ? <FaEyeSlash /> : <FaEye />}
-                  </IconButton>
-                ),
-              }}
-            />
+                    sx={{ flex: 1 }}
+                    placeholder="e.g., username, api_key"
+                  />
+                  <TextField
+                    label="Value"
+                    type={field.showValue ? 'text' : 'password'}
+                    value={field.value}
+                    onChange={(e) => {
+                      const newFields = [...formData.fields];
+                      newFields[index].value = e.target.value;
+                      setFormData({ ...formData, fields: newFields });
+                    }}
+                    size="small"
+                    sx={{ flex: 1 }}
+                    InputProps={{
+                      endAdornment: (
+                        <IconButton
+                          onClick={() => {
+                            const newFields = [...formData.fields];
+                            newFields[index].showValue = !newFields[index].showValue;
+                            setFormData({ ...formData, fields: newFields });
+                          }}
+                          edge="end"
+                          size="small"
+                        >
+                          {field.showValue ? <FaEyeSlash /> : <FaEye />}
+                        </IconButton>
+                      ),
+                    }}
+                  />
+                  {formData.fields.length > 1 && (
+                    <IconButton
+                      onClick={() => {
+                        const newFields = formData.fields.filter((_, i) => i !== index);
+                        setFormData({ ...formData, fields: newFields });
+                      }}
+                      size="small"
+                      color="error"
+                    >
+                      <FaTimes />
+                    </IconButton>
+                  )}
+                </div>
+              ))}
+              
+              {errors.fields && (
+                <p className="text-sm text-red-600 mt-1">{errors.fields}</p>
+              )}
+            </div>
 
-            {/* URL */}
-            <TextField
-              fullWidth
-              label="URL (Optional)"
-              value={formData.url}
-              onChange={(e) =>
-                setFormData({ ...formData, url: e.target.value })
-              }
-              placeholder="https://example.com"
-              size="small"
-            />
+
 
             {/* Notes */}
             <TextField

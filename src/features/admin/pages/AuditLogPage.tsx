@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { adminApi, activityLogUtils, type Activity } from "../api/adminApi";
 import { RecentActivityCard } from "../../../common/components/RecentActivityCard";
 import { toast } from '../../../common/utils/toast';
-import { shouldShowError, getErrorMessage } from '../../../utils/errorHandler';
+import { shouldShowError, getErrorMessage } from '../../../common/utils/errorHandler';
 
 
 /**
@@ -75,8 +75,10 @@ export const AuditLogPage: React.FC = () => {
         `activity-logs-${new Date().toISOString().split("T")[0]}.json`
       );
       toast.success("Downloaded successfully!");
-    } catch {
-      toast.error("Failed to download logs");
+    } catch (err) {
+      if (shouldShowError(err)) {
+        toast.error(getErrorMessage(err, "Failed to download logs"));
+      }
     }
   };
 

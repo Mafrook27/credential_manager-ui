@@ -6,7 +6,7 @@ import {type User } from '../types/user.types';
 import { DEFAULT_PAGINATION } from '../constants/user.constants';
 import { adminApi } from '../api/adminApi';
 import { toast } from '../../../common/utils/toast';
-import { shouldShowError, getErrorMessage } from '../../../utils/errorHandler';
+import { shouldShowError, getErrorMessage } from '../../../common/utils/errorHandler';
 
 /**
  * Custom hook for User Table logic

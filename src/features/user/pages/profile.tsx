@@ -6,7 +6,7 @@ import { toast } from './../../../common/utils/toast';
 import { useNavigate } from 'react-router-dom';
 import { MdLock, MdEdit, MdLogout, MdSchedule, MdDelete } from 'react-icons/md';
 import { formatLastLogin } from '../../../utils/formatLastLogin';
-import { shouldShowError, getErrorMessage } from '../../../utils/errorHandler';
+import { shouldShowError, getErrorMessage } from '../../../common/utils/errorHandler';
 // Import modals
 import { EditPasswordModal } from '../Components/EditPasswordModal';
 import { EditProfileModal } from '../Components/EditProfileModal';

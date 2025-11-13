@@ -35,13 +35,24 @@ export interface CreatedByUser {
 }
 
 /**
+ * Credential Field
+ */
+export interface CredentialField {
+  key: string;
+  value: string;
+}
+
+/**
  * Credential Data (nested object)
  */
 export interface CredentialData {
-  username: string;        // Masked username (e.g., "a***m")
-  password: string;        // Encrypted password
-  url?: string;            // Optional URL
-  notes?: string;          // Optional notes
+  fields?: CredentialField[];  // Dynamic fields array
+  url?: string;                // Optional URL
+  notes?: string;              // Optional notes
+  
+  // Legacy support (backward compatibility)
+  username?: string;           // Masked username (e.g., "a***m")
+  password?: string;           // Encrypted password
 }
 
 /**
@@ -57,6 +68,9 @@ export interface Credential {
   createdBy: CreatedByUser;
   createdAt: string;
   updatedAt?: string;
+  
+  // Direct fields (when returned from decrypt endpoint)
+  fields?: CredentialField[];
   
   // Legacy support (some endpoints might return flat structure)
   username?: string;
@@ -107,10 +121,12 @@ export interface DecryptedCredential extends Credential {
  * For POST /api/admin/credentials
  */
 export interface CreateCredentialPayload {
-  username: string;
-  password: string;
-  url?: string;
+  fields: CredentialField[];  // Dynamic fields array
   notes?: string;
+  
+  // Legacy support (will be removed)
+  username?: string;
+  password?: string;
 }
 
 /**
@@ -118,10 +134,12 @@ export interface CreateCredentialPayload {
  * For PUT /api/admin/credentials/:id
  */
 export interface UpdateCredentialPayload {
+  fields?: CredentialField[];  // Dynamic fields array
+  notes?: string;
+  
+  // Legacy support (will be removed)
   username?: string;
   password?: string;
-  url?: string;
-  notes?: string;
 }
 
 /**

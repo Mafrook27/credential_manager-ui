@@ -17,7 +17,7 @@ import { InstanceManagementModal } from "../components/modals/InstanceModel";
 import { ActionCard } from "../../../common/components/ActionCard";
 import type { User } from "../types/user.types";
 import { AxiosError } from 'axios';
-import { shouldShowError, getErrorMessage } from '../../../utils/errorHandler';
+import { shouldShowError, getErrorMessage } from '../../../common/utils/errorHandler';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();

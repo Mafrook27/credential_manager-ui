@@ -8,7 +8,7 @@ import type { User, UserStatus } from '../types/user.types';
 import { selectSearchQuery, selectIsSearchActive } from '../redux/selectors';
 import { setSearchQuery } from '../redux/actions';
 import { toast } from '../../../common/utils/toast';
-import { getErrorMessage, shouldShowError } from '../../../utils/errorHandler';
+import { getErrorMessage, shouldShowError } from '../../../common/utils/errorHandler';
 import { IoSearch } from 'react-icons/io5';
 import { useDebounce } from '../../../common/hooks/useDebounce';
 
@@ -25,9 +25,7 @@ interface UserData {
 }
 
 interface CredentialFormData {
-  username: string;
-  password: string;
-  url?: string;
+  fields: Array<{ key: string; value: string }>;
   notes?: string;
   rootId: string;
   subId: string;
@@ -67,6 +65,9 @@ export const AllCredentialsPage: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [editingCredential, setEditingCredential] = useState<Credential | null>(null);
+  
+  // Card interaction state
+  const [activeCardId, setActiveCardId] = useState<string | null>(null);
 
   // Debounce search query to avoid too many API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
@@ -117,10 +118,11 @@ export const AllCredentialsPage: React.FC = () => {
       setTotalItems(response.total);
       setCurrentPage(response.page);
     } catch (err) {
-      const errorMessage = getErrorMessage(err, 'Failed to fetch credentials');
-      setError(errorMessage);
-      toast.error(errorMessage);
-      // console.error('❌ Fetch error:', err);
+      if (shouldShowError(err)) {
+        const errorMessage = getErrorMessage(err, 'Failed to fetch credentials');
+        setError(errorMessage);
+        toast.error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -197,21 +199,31 @@ export const AllCredentialsPage: React.FC = () => {
       toast.success('Credential deleted successfully');
       fetchCredentials();
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Failed to delete'));
+      if (shouldShowError(err)) {
+        toast.error(getErrorMessage(err, 'Failed to delete'));
+      }
     }
   };
 
-  const handleDecrypt = async (id: string): Promise<{ username: string; password: string }> => {
+  const handleDecrypt = async (id: string): Promise<{ fields?: any[]; username?: string; password?: string }> => {
     try {
       const response = await decryptCredential(id);
       const credential = response.data.credential || response.data.displaycred;
       
-      return {
-        username: credential?.username || '',
-        password: credential?.password || '',
-      };
+      // Return fields array if available, otherwise return legacy format
+      if (credential?.fields && Array.isArray(credential.fields)) {
+        return { fields: credential.fields };
+      } else {
+        // Fallback to legacy structure
+        return { 
+          username: credential?.username || '', 
+          password: credential?.password || '' 
+        };
+      }
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Failed to decrypt'));
+      if (shouldShowError(err)) {
+        toast.error(getErrorMessage(err, 'Failed to decrypt'));
+      }
       throw err;
     }
   };
@@ -222,7 +234,9 @@ export const AllCredentialsPage: React.FC = () => {
       toast.success('Credential shared successfully');
       fetchCredentials();
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Failed to share'));
+      if (shouldShowError(err)) {
+        toast.error(getErrorMessage(err, 'Failed to share'));
+      }
     }
   };
 
@@ -232,7 +246,9 @@ export const AllCredentialsPage: React.FC = () => {
       toast.success('Access revoked successfully');
       fetchCredentials();
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Failed to revoke'));
+      if (shouldShowError(err)) {
+        toast.error(getErrorMessage(err, 'Failed to revoke'));
+      }
     }
   };
 
@@ -259,7 +275,9 @@ export const AllCredentialsPage: React.FC = () => {
       toast.success('Credential created successfully');
       fetchCredentials();
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Failed to create credential'));
+      if (shouldShowError(err)) {
+        toast.error(getErrorMessage(err, 'Failed to create credential'));
+      }
       throw err;
     }
   };
@@ -271,15 +289,17 @@ export const AllCredentialsPage: React.FC = () => {
       toast.success('Credential updated successfully');
       fetchCredentials();
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Failed to update credential'));
+      if (shouldShowError(err)) {
+        toast.error(getErrorMessage(err, 'Failed to update credential'));
+      }
       throw err;
     }
   };
 
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6">
-      <div className=" mx-2 mt-2">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-full">
         {/* Header */}
         <div className="mb-3 sm:mb-4 md:mb-6 mt-3">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3 mb-2">
@@ -356,12 +376,31 @@ export const AllCredentialsPage: React.FC = () => {
         {!loading && !error && (
           <>
             {credentials.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
                 {credentials.map((credential: Credential) => {
                 
                   const credData = credential.credentialData || credential;
-                  const username = credData.username || credential.username || 'No username';
-                  const password = credData.password || credential.password || '';
+                  
+                  // Get fields array or convert legacy username/password to fields
+                  let fields;
+                  if (credData.fields && Array.isArray(credData.fields)) {
+                    // Map backend fields to display format with masked values
+                    fields = credData.fields.map((f, idx) => ({
+                      id: `field-${idx}`,
+                      key: f.key,
+                      value: f.key.toLowerCase().includes('password') || f.key.toLowerCase().includes('secret') 
+                        ? '••••••••••••' 
+                        : f.value
+                    }));
+                  } else {
+                    // Fallback to legacy structure
+                    const username = credData.username || credential.username || 'No username';
+                    fields = [
+                      { id: 'username', key: 'username', value: username },
+                      { id: 'password', key: 'password', value: '••••••••••••' }
+                    ];
+                  }
+                  
                   const url = credData.url || credential.url;
                   const notes = credData.notes || credential.notes;
                   
@@ -371,8 +410,7 @@ export const AllCredentialsPage: React.FC = () => {
                       id={credential._id}
                       serviceName={credential.rootInstance.serviceName}
                       credentialName={credential.subInstance.name}
-                      username={username}
-                      password={password}
+                      fields={fields}
                       url={url}
                       notes={notes}
                       sharedWith={credential.sharedWith}
@@ -387,6 +425,8 @@ export const AllCredentialsPage: React.FC = () => {
                       onSearchUsers={fetchUsers}
                       availableUsers={availableUsers}
                       isLoadingUsers={false}
+                      onCardInteraction={(cardId) => setActiveCardId(cardId)}
+                      shouldResetState={activeCardId !== credential._id}
                     />
                   );
                 })}

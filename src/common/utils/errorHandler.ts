@@ -5,9 +5,29 @@ interface ApiError {
   response?: {
     data?: {
       message?: string;
+      code?: string;
     };
+    status?: number;
   };
   message?: string;
+  isAuthError?: boolean;
+  handledByInterceptor?: boolean;
+}
+
+/**
+ * Check if error should be displayed to user
+ * Returns false if error is already handled by interceptor (auth errors)
+ */
+export function shouldShowError(error: unknown): boolean {
+  const apiError = error as ApiError;
+  
+  // If error is marked as handled by interceptor, don't show it
+  if (apiError.handledByInterceptor || apiError.isAuthError) {
+    console.log('🔕 Error already handled by interceptor, suppressing toast');
+    return false;
+  }
+  
+  return true;
 }
 
 /**
@@ -17,6 +37,11 @@ interface ApiError {
  * @returns A user-friendly error message
  */
 export function getErrorMessage(error: unknown, defaultMessage = 'An error occurred'): string {
+  // Don't return message if error is handled by interceptor
+  if (!shouldShowError(error)) {
+    return '';
+  }
+  
   // Check if it's an Error instance
   if (error instanceof Error) {
     // Check if it has response property (Axios error)

@@ -17,9 +17,11 @@ interface Credential {
     name: string;
   };
   credentialData?: {
+    fields?: Array<{ key: string; value: string }>;
     username?: string;
     password?: string;
   };
+  fields?: Array<{ key: string; value: string }>;
   isOwner: boolean;
   createdBy?: {
     name: string;
@@ -194,25 +196,41 @@ export const ShowcaseContainer: React.FC<ShowcaseContainerProps> = ({
       {/* Responsive Grid */}
       <div className="row g-3">
         {displayedCredentials.map((credential) => {
-          // Extract data properly from API response (same as Credentialpage.user.tsx)
+          // Extract data properly from API response
           const credData = credential.credentialData || credential;
           
           const serviceName = credential.rootInstance?.serviceName || credential.serviceName || 'Unknown';
           const subInstanceName = credential.subInstance?.name || credential.subInstanceName || '';
-          const username = credData.username || credential.username || 'N/A';
           const type = credential.rootInstance?.type || credential.type || 'other';
           const initials = getInitials(serviceName);
+          
+          // Get fields - support both new fields array and legacy username/password
+          let fields: Array<{ key: string; value: string }> = [];
+          if (credData.fields && Array.isArray(credData.fields)) {
+            fields = credData.fields;
+          } else if (credential.fields && Array.isArray(credential.fields)) {
+            fields = credential.fields;
+          } else {
+            // Fallback to legacy structure
+            const username = credData.username || credential.username;
+            if (username) {
+              fields.push({ key: 'username', value: username });
+            }
+          }
+          
+          // Show first 2 fields only
+          const displayFields = fields.slice(0, 2);
           
           return (
             <div key={credential._id} className="col-12 col-sm-6 col-lg-6 col-xl-3">
               <div 
-                className="rounded-3 border position-relative"
+                className="rounded-3 border position-relative d-flex flex-column"
                 style={{ 
                   padding: '1.25rem',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                   backgroundColor: credential.isOwner ? '#ffffff' : '#f8fafc',
-                  minHeight: '180px',
+                  height: '200px',
                 }}
                 onClick={() => navigate('/credentials')}
                 onMouseEnter={(e) => {
@@ -255,29 +273,23 @@ export const ShowcaseContainer: React.FC<ShowcaseContainerProps> = ({
                   </div>
                 </div>
 
-                {/* Username */}
-                <div className="mb-2">
-                  <div className="d-flex align-items-center gap-2">
-                    <span className="text-muted" style={{ fontSize: '0.75rem' }}>Username:</span>
-                    <span className="text-truncate fw-medium" style={{ fontSize: '0.85rem' }}>
-                      {username}
-                    </span>
-                  </div>
+                {/* Dynamic Fields - Fixed height container */}
+                <div className="flex-grow-1" style={{ minHeight: '60px' }}>
+                  {displayFields.map((field, index) => (
+                    <div key={index} className="mb-2">
+                      <div className="d-flex align-items-center gap-2">
+                        <span className="text-muted text-capitalize" style={{ fontSize: '0.75rem' }}>{field.key}:</span>
+                        <span className="text-truncate fw-medium" style={{ fontSize: '0.85rem', fontFamily: field.key.toLowerCase().includes('password') ? 'monospace' : 'inherit' }}>
+                          {field.key.toLowerCase().includes('password') || field.key.toLowerCase().includes('secret') ? '••••••••••••' : field.value}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
-                {/* Password */}
-                <div className="mb-2">
-                  <div className="d-flex align-items-center gap-2">
-                    <span className="text-muted" style={{ fontSize: '0.75rem' }}>Password:</span>
-                    <span className="text-truncate fw-medium" style={{ fontSize: '0.85rem', fontFamily: 'monospace' }}>
-                      ••••••••••••
-                    </span>
-                  </div>
-                </div>
-
-                {/* Owner Badge */}
-                {!credential.isOwner && (
-                  <div className="mt-3">
+                {/* Owner Badge - Fixed at bottom */}
+                <div className="mt-auto" style={{ height: '32px', display: 'flex', alignItems: 'flex-end' }}>
+                  {!credential.isOwner && (
                     <span 
                       className="badge d-inline-flex align-items-center gap-1"
                       style={{
@@ -294,13 +306,8 @@ export const ShowcaseContainer: React.FC<ShowcaseContainerProps> = ({
                       </svg>
                       Shared with you
                     </span>
-                  </div>
-                )}
-                {credential.isOwner && (
-                  <div className="mt-3" style={{ height: '28px' }}>
-                    {/* Empty space to maintain consistent card height */}
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           );

@@ -15,12 +15,14 @@ export interface Credential {
     name: string;
   };
   credentialData?: {
-    username: string;
-    password: string;
+    fields?: Array<{ key: string; value: string }>;
+    username?: string;
+    password?: string;
     url?: string;
     notes?: string;
   };
   // Flat structure (fallback)
+  fields?: Array<{ key: string; value: string }>;
   serviceName?: string;
   subInstanceName?: string;
   username?: string;
@@ -69,10 +71,12 @@ export interface GetCredentialResponse {
 }
 
 export interface CreateCredentialData {
-  username: string;
-  password: string;
-  url?: string;
+  fields: Array<{ key: string; value: string }>;
   notes?: string;
+  // Legacy support
+  username?: string;
+  password?: string;
+  url?: string;
 }
 
 export interface CreateCredentialResponse {
@@ -84,10 +88,12 @@ export interface CreateCredentialResponse {
 }
 
 export interface UpdateCredentialData {
+  fields?: Array<{ key: string; value: string }>;
+  notes?: string;
+  // Legacy support
   username?: string;
   password?: string;
   url?: string;
-  notes?: string;
 }
 
 export interface UpdateCredentialResponse {

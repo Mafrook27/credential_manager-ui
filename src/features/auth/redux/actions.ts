@@ -3,6 +3,7 @@ import type { LoginCredentials, RegisterData, AuthResponse, ResetPasswordRequest
 import { login as loginAPI, register as registerAPI, resetPasswordRequest as resetPasswordRequestAPI, resetPasswordVerify as resetPasswordVerifyAPI, getUserProfile as getUserProfileAPI, logout as logoutAPI } from '../api';
 import type { Dispatch } from 'redux';
 import { getAuthErrorMessage } from '../utils/authErrorHandler';
+import { resetRefreshState } from '../../../services/axios';
 
 export const loginRequest = () => ({
   type: types.LOGIN_REQUEST,
@@ -39,11 +40,17 @@ export const logoutSuccess = () => ({
 // Thunk action for logout
 export const logout = () => async (dispatch: Dispatch) => {
   try {
+    // Reset axios refresh state to prevent stale refresh attempts
+    resetRefreshState();
+    
     await logoutAPI();
     dispatch(logoutSuccess());
   } catch (error: any) {
     // Even if logout API fails, clear local state
     console.error('Logout API error:', error);
+    
+    // Still reset refresh state
+    resetRefreshState();
     dispatch(logoutSuccess());
   }
 };

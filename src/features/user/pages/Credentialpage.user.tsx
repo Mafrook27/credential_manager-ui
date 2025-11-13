@@ -11,7 +11,7 @@ import { userCredentialApi } from '../api/user.credential.api';
 import { instanceApi } from '../../../common/api/instanceApi';
 import type { RootInstance, SubInstance } from '../../../common/api/instanceApi';
 import type { User, UserRole } from '../../admin/types/user.types';
-import { shouldShowError, getErrorMessage } from '../../../utils/errorHandler';
+import { shouldShowError, getErrorMessage } from '../../../common/utils/errorHandler';
 
 // ========== TYPES ==========
 interface ApiCredential {
@@ -21,9 +21,11 @@ interface ApiCredential {
   subInstanceName: string;
   username: string;
   password: string;
+  fields?: Array<{ key: string; value: string }>;
   url?: string;
   notes?: string;
   credentialData?: {  
+    fields?: Array<{ key: string; value: string }>;
     username?: string;
     password?: string;
     url?: string;
@@ -64,6 +66,9 @@ export const UserCredentialPage: React.FC = () => {
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [editingCredential, setEditingCredential] = useState<ApiCredential | null>(null);
+  
+  // Card interaction state
+  const [activeCardId, setActiveCardId] = useState<string | null>(null);
 
   const debouncedSearchQuery = useDebounce<string>(searchQuery, 500);
   const isDebouncing = searchQuery !== debouncedSearchQuery;
@@ -272,14 +277,21 @@ export const UserCredentialPage: React.FC = () => {
     [fetchCredentials]
   );
 
-  const handleDecrypt = useCallback(async (id: string): Promise<{ username: string; password: string }> => {
+  const handleDecrypt = useCallback(async (id: string): Promise<{ fields?: any[]; username?: string; password?: string }> => {
     try {
       const response = await userCredentialApi.getCredentialDecrypted(id);
-      const credential = response.data.credential as unknown as { username?: string; password?: string };
-      return {
-        username: credential?.username || '',
-        password: credential?.password || '',
-      };
+      const credential = response.data.credential as unknown as { fields?: any[]; username?: string; password?: string };
+      
+      // Return fields array if available, otherwise return legacy format
+      if (credential?.fields && Array.isArray(credential.fields)) {
+        return { fields: credential.fields };
+      } else {
+        // Fallback to legacy structure
+        return { 
+          username: credential?.username || '', 
+          password: credential?.password || '' 
+        };
+      }
     } catch (err: unknown) {
       if (shouldShowError(err)) {
         toast.error(getErrorMessage(err, 'Failed to decrypt'));
@@ -341,17 +353,10 @@ const handleOpenEditModal = useCallback((credential: ApiCredential) => {
         const formData = data as {
           rootId: string;
           subId: string;
-          username: string;
-          password: string;
-          url?: string;
+          fields: Array<{ key: string; value: string }>;
           notes?: string;
         };
-        await userCredentialApi.createCredential(formData.rootId, formData.subId, {
-          username: formData.username,
-          password: formData.password,
-          url: formData.url,
-          notes: formData.notes,
-        });
+        await userCredentialApi.createCredential(formData.rootId, formData.subId, formData as any);
         toast.success('Credential created successfully');
         handleCloseModal();
         fetchCredentials();
@@ -369,13 +374,8 @@ const handleOpenEditModal = useCallback((credential: ApiCredential) => {
     async (data: unknown) => {
       try {
         if (!editingCredential) return;
-        const formData = data as { username: string; password: string; url?: string; notes?: string };
-        await userCredentialApi.updateCredential(editingCredential._id, {
-          username: formData.username,
-          password: formData.password,
-          url: formData.url,
-          notes: formData.notes,
-        });
+        const formData = data as { fields: Array<{ key: string; value: string }>; notes?: string };
+        await userCredentialApi.updateCredential(editingCredential._id, formData as any);
         toast.success('Credential updated successfully');
         handleCloseModal();
         fetchCredentials();
@@ -391,8 +391,8 @@ const handleOpenEditModal = useCallback((credential: ApiCredential) => {
 
   // ========== RENDER ==========
   return (
-    <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6">
-      <div className="mx-2 mt-2">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-full">
         {/* Header */}
         <div className="mb-3 sm:mb-4 md:mb-6 mt-3">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3 mb-2">
@@ -513,13 +513,30 @@ const handleOpenEditModal = useCallback((credential: ApiCredential) => {
         {!loading && !error && (
           <>
             {filteredCredentials.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
              {filteredCredentials.map((cred) => {
-  // ✅ ADD THIS - Extract data like admin does
-const credData = cred.credentialData || cred;
-
-  const username = credData.username || cred.username || 'No username';
-  const password = credData.password || cred.password || '';
+  const credData = cred.credentialData || cred;
+  
+  // Get fields array or convert legacy username/password to fields
+  let fields;
+  if (credData.fields && Array.isArray(credData.fields)) {
+    // Map backend fields to display format with masked values
+    fields = credData.fields.map((f: any, idx: number) => ({
+      id: `field-${idx}`,
+      key: f.key,
+      value: f.key.toLowerCase().includes('password') || f.key.toLowerCase().includes('secret') 
+        ? '••••••••••••' 
+        : f.value
+    }));
+  } else {
+    // Fallback to legacy structure
+    const username = credData.username || cred.username || 'No username';
+    fields = [
+      { id: 'username', key: 'username', value: username },
+      { id: 'password', key: 'password', value: '••••••••••••' }
+    ];
+  }
+  
   const url = credData.url || cred.url;
   const notes = credData.notes || cred.notes;
 
@@ -535,10 +552,9 @@ const credData = cred.credentialData || cred;
         (cred as unknown as { subInstance?: { name: string } })?.subInstance?.name ||
         cred.subInstanceName
       }
-      username={username}        // ✅ Use extracted
-      password={password}        // ✅ Use extracted
-      url={url}                  // ✅ Use extracted
-      notes={notes}              // ✅ Use extracted
+      fields={fields}
+      url={url}
+      notes={notes}
       sharedWith={cred.sharedWith}
       createdBy={cred.createdBy}
       createdAt={cred.createdAt}
@@ -551,6 +567,8 @@ const credData = cred.credentialData || cred;
       onSearchUsers={fetchUsers}
       availableUsers={availableUsers}
       isLoadingUsers={false}
+      onCardInteraction={(cardId) => setActiveCardId(cardId)}
+      shouldResetState={activeCardId !== cred._id}
     />
   );
 })}

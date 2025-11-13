@@ -9,7 +9,7 @@ import { Modal } from '../../../../common/components/Modal';
 import { ConfirmModal } from '../../../../common/modals/ConfirmModal';
 import { instanceApi, type RootInstance, type SubInstance } from '../../../../common/api/instanceApi';
 import { toast } from '../../../../common/utils/toast';
-import { shouldShowError, getErrorMessage } from '../../../../utils/errorHandler';
+import { shouldShowError, getErrorMessage } from '../../../../common/utils/errorHandler';
 
 // ==================== TYPES ====================
 interface InstanceManagementModalProps {
