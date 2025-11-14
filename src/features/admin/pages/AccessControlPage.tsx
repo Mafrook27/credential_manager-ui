@@ -56,6 +56,24 @@ interface MyInstance {
   subInstances: SubInstance[];
 }
 
+interface MyCredential {
+  _id: string;
+  credentialId: string;
+  rootInstance: {
+    rootId: string;
+    rootName: string;
+  };
+  subInstance: {
+    subId: string;
+    subName: string;
+  };
+  fields: any;
+  notes: string;
+  createdAt: string;
+  sharedWithCount: number;
+  sharedWith: SharedWithUser[];
+}
+
 interface SharedAccess {
   _id: string;
   credentialId: string;
@@ -86,6 +104,7 @@ interface UserAccess {
   userDetails: UserDetails;
   summary: Summary;
   myInstances: MyInstance[];
+  myCredentials: MyCredential[];
   sharedAccess: SharedAccess[];
 }
 
@@ -151,6 +170,13 @@ export const AccessControlPage: React.FC = () => {
           instance.subInstances?.forEach((sub) => {
             rootToSubsMap.get(instance.rootName)?.add(sub.subName);
           });
+        });
+        user.myCredentials?.forEach((cred) => {
+          roots.add(cred.rootInstance.rootName);
+          if (!rootToSubsMap.has(cred.rootInstance.rootName)) {
+            rootToSubsMap.set(cred.rootInstance.rootName, new Set<string>());
+          }
+          rootToSubsMap.get(cred.rootInstance.rootName)?.add(cred.subInstance.subName);
         });
         user.sharedAccess?.forEach((access) => {
           roots.add(access.rootInstance.rootName);
@@ -375,11 +401,11 @@ export const AccessControlPage: React.FC = () => {
                       <tr>
                         <td className="p-0" colSpan={6}>
                           <div className="bg-gray-50 p-6">
-                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                              {/* Left Column - My Instances */}
+                            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 md:grid-cols-2">
+                              {/* Column 1 - My Instances (Root + Sub created by user) */}
                               <div>
                                 <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-gray-700">
-                                  MY INSTANCES ({user.myInstances?.length || 0})
+                                  INSTANCES CREATED ({user.myInstances?.length || 0})
                                 </h3>
                                 <ul className="space-y-1 text-sm text-gray-700">
                                   {user.myInstances && user.myInstances.length > 0 ? (
@@ -407,15 +433,47 @@ export const AccessControlPage: React.FC = () => {
                                       </li>
                                     ))
                                   ) : (
-                                    <li className="text-gray-500 italic">No instances</li>
+                                    <li className="text-gray-500 italic">No instances created</li>
                                   )}
                                 </ul>
                               </div>
 
-                              {/* Right Column - Shared Access */}
+                              {/* Column 2 - My Credentials (Credentials created by user) */}
                               <div>
                                 <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-gray-700">
-                                  SHARED ACCESS ({user.sharedAccess?.length || 0})
+                                  CREDENTIALS CREATED ({user.myCredentials?.length || 0})
+                                </h3>
+                                <ul className="space-y-2">
+                                  {user.myCredentials && user.myCredentials.length > 0 ? (
+                                    user.myCredentials.map((cred) => (
+                                      <li key={cred.credentialId}>
+                                        <div className="flex items-start py-0.5">
+                                          <span className="mr-2 text-gray-400 mt-0.5">•</span>
+                                          <div className="flex-1">
+                                            <p className="text-sm">
+                                              <span className="text-gray-900">{cred.rootInstance.rootName}</span>
+                                              <span className="text-gray-500"> - </span>
+                                              <span className="text-gray-700">{cred.subInstance.subName}</span>
+                                            </p>
+                                            {cred.sharedWithCount > 0 && (
+                                              <p className="text-xs italic text-blue-600 mt-0.5">
+                                                Shared with {cred.sharedWithCount} user{cred.sharedWithCount > 1 ? 's' : ''}
+                                              </p>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </li>
+                                    ))
+                                  ) : (
+                                    <li className="text-gray-500 italic">No credentials created</li>
+                                  )}
+                                </ul>
+                              </div>
+
+                              {/* Column 3 - Shared Access (Credentials shared WITH user) */}
+                              <div>
+                                <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-gray-700">
+                                  SHARED WITH ME ({user.sharedAccess?.length || 0})
                                 </h3>
                                 <ul className="space-y-2">
                                   {user.sharedAccess && user.sharedAccess.length > 0 ? (
