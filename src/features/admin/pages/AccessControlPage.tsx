@@ -1,4 +1,4 @@
-// src/features/admin/pages/AccessControlPage.tsx
+
 import React, { useEffect, useState } from 'react';
 import { adminApi } from '../api/adminApi';
 import { toast } from '../../../common/utils/toast';
@@ -124,13 +124,13 @@ export const AccessControlPage: React.FC = () => {
   const [rootFilter, setRootFilter] = useState('');
   const [subFilter, setSubFilter] = useState('');
 
-  // Expanded states
-  const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
-
   // Get unique root and sub instances for filters
   const [rootInstances, setRootInstances] = useState<string[]>([]);
   const [allSubInstances, setAllSubInstances] = useState<Map<string, string[]>>(new Map());
   const [subInstances, setSubInstances] = useState<string[]>([]);
+
+  const [selectedUser, setSelectedUser] = useState<UserAccess | null>(null);
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     fetchUserAccess();
@@ -216,22 +216,12 @@ export const AccessControlPage: React.FC = () => {
     }
   };
 
-  const toggleUserExpanded = (userId: string) => {
-    const newExpanded = new Set(expandedUsers);
-    if (newExpanded.has(userId)) {
-      newExpanded.delete(userId);
-    } else {
-      newExpanded.add(userId);
-    }
-    setExpandedUsers(newExpanded);
-  };
-
   const getRoleBadgeColor = (role: string) => {
     return role === 'admin' 
-      ? 'bg-red-600 text-white' 
+      ? 'bg-red-100 text-red-800'
       : role === 'editor'
-      ? 'bg-gray-500 text-white'
-      : 'bg-gray-400 text-white';
+      ? 'bg-green-100 text-green-800'
+      : 'bg-blue-100 text-blue-800';
   };
 
   const renderPageNumbers = () => {
@@ -243,7 +233,7 @@ export const AccessControlPage: React.FC = () => {
           onClick={() => setCurrentPage(i)}
           className={`flex h-8 w-8 items-center justify-center rounded-full ${
             currentPage === i
-              ? 'bg-blue-600 text-white'
+              ? 'bg-primary text-white'
               : 'hover:bg-gray-100'
           }`}
         >
@@ -254,279 +244,322 @@ export const AccessControlPage: React.FC = () => {
     return pages;
   };
 
+  const renderDetailContent = () => {
+    if (!selectedUser) return null;
+    switch (activeTab) {
+      case 'overview':
+        return (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-100 p-4 rounded-lg">
+                <p className="text-sm text-gray-500">Role</p>
+                <p className="font-semibold text-lg">{selectedUser.userDetails.role}</p>
+              </div>
+              <div className="bg-gray-100 p-4 rounded-lg">
+                <p className="text-sm text-gray-500">Status</p>
+                <p className="font-semibold text-lg text-green-600">Active</p>
+              </div>
+            </div>
+          </div>
+        );
+      case 'instances':
+        return (
+          <div>
+             <ul className="space-y-1 text-sm text-gray-700">
+              {selectedUser.myInstances && selectedUser.myInstances.length > 0 ? (
+                selectedUser.myInstances.map((instance) => (
+                  <li key={instance.rootId}>
+                    {instance.subInstances && instance.subInstances.length > 0 ? (
+                      instance.subInstances.map((sub) => (
+                        <div key={sub.subId} className="flex items-start py-0.5">
+                          <span className="mr-2 text-gray-400 mt-0.5">•</span>
+                          <span className="flex-1">
+                            <span className="text-gray-900">{instance.rootName}</span>
+                            <span className="text-gray-500"> - </span>
+                            <span className="text-gray-700">{sub.subName}</span>
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex items-start py-0.5">
+                        <span className="mr-2 text-gray-400 mt-0.5">•</span>
+                        <span className="flex-1">
+                          <span className="text-gray-900">{instance.rootName}</span>
+                        </span>
+                      </div>
+                    )}
+                  </li>
+                ))
+              ) : (
+                <li className="text-gray-500 italic">No instances created</li>
+              )}
+            </ul>
+          </div>
+        );
+      case 'owned_credentials':
+        return (
+          <div>
+            <ul className="space-y-2">
+              {selectedUser.myCredentials && selectedUser.myCredentials.length > 0 ? (
+                selectedUser.myCredentials.map((cred) => (
+                  <li key={cred.credentialId}>
+                    <div className="flex items-start py-0.5">
+                      <span className="mr-2 text-gray-400 mt-0.5">•</span>
+                      <div className="flex-1">
+                        <p className="text-sm">
+                          <span className="text-gray-900">{cred.rootInstance.rootName}</span>
+                          <span className="text-gray-500"> - </span>
+                          <span className="text-gray-700">{cred.subInstance.subName}</span>
+                        </p>
+                        {cred.sharedWithCount > 0 && (
+                          <p className="text-xs italic text-blue-600 mt-0.5">
+                            Shared with {cred.sharedWithCount} user{cred.sharedWithCount > 1 ? 's' : ''}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                ))
+              ) : (
+                <li className="text-gray-500 italic">No credentials created</li>
+              )}
+            </ul>
+          </div>
+        );
+      case 'shared_with_user':
+        return (
+          <div>
+            <ul className="space-y-2">
+              {selectedUser.sharedAccess && selectedUser.sharedAccess.length > 0 ? (
+                selectedUser.sharedAccess.map((access) => (
+                  <li key={access.credentialId}>
+                    <div className="flex items-start py-0.5">
+                      <span className="mr-2 text-gray-400 mt-0.5">•</span>
+                      <div className="flex-1">
+                        <p className="text-sm">
+                          <span className="text-gray-900">{access.rootInstance.rootName}</span>
+                          <span className="text-gray-500"> - </span>
+                          <span className="text-gray-700">{access.subInstance.subName}</span>
+                        </p>
+                        <p className="text-xs italic text-gray-500 mt-0.5">
+                          Shared by: {access.sharedBy.name}
+                        </p>
+                      </div>
+                    </div>
+                  </li>
+                ))
+              ) : (
+                <li className="text-gray-500 italic">No shared access</li>
+              )}
+            </ul>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
-      {/* Filter Container */}
-      <div className="mb-6 rounded-lg bg-white p-5">
-        <div className="flex flex-wrap items-center gap-4">
-          {/* Search Input */}
-          <div className="relative w-full md:w-auto md:flex-1 md:min-w-[360px]">
-            <IoSearch className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              className="h-[44px] w-full rounded border border-gray-300 bg-transparent pl-10 pr-4 focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-              placeholder="Search by name, email, root, or sub instance..."
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-
-          {/* Root Instance Dropdown */}
-          <div className="relative w-full sm:w-auto md:w-[240px]">
-            <select
-              className="h-[44px] w-full appearance-none rounded border border-gray-300 bg-transparent pl-4 pr-10 focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-              value={rootFilter}
-              onChange={(e) => {
-                const newRoot = e.target.value;
-                setRootFilter(newRoot);
-                // Reset sub filter when root changes
-                setSubFilter('');
-                // Update available sub instances
-                if (newRoot && allSubInstances.has(newRoot)) {
-                  setSubInstances(allSubInstances.get(newRoot) || []);
-                } else {
-                  // Show all subs if no root filter
-                  const allSubs = new Set<string>();
-                  allSubInstances.forEach((subs) => subs.forEach((sub) => allSubs.add(sub)));
-                  setSubInstances(Array.from(allSubs).sort());
-                }
-              }}
-            >
-              <option value="">Root Instance: All</option>
-              {rootInstances.map((root) => (
-                <option key={root} value={root}>
-                  Root Instance: {root}
-                </option>
-              ))}
-            </select>
-            <IoChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          </div>
-
-          {/* Sub Instance Dropdown */}
-          <div className="relative w-full sm:w-auto md:w-[240px]">
-            <select
-              className="h-[44px] w-full appearance-none rounded border border-gray-300 bg-transparent pl-4 pr-10 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              value={subFilter}
-              onChange={(e) => setSubFilter(e.target.value)}
-              disabled={!rootFilter}
-            >
-              <option value="">Sub Instance: All</option>
-              {subInstances.map((sub) => (
-                <option key={sub} value={sub}>
-                  Sub Instance: {sub}
-                </option>
-              ))}
-            </select>
-            <IoChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+    <div className="flex flex-col lg:flex-row min-h-screen bg-background-light font-display text-gray-800">
+      <main className="w-full lg:flex-1 transition-all duration-300 ease-in-out">
+        <div className="flex items-center p-4 border-b border-gray-200">
+          <h1 className="text-xl font-bold leading-tight tracking-tight flex-1 ml-2 lg:ml-0">Access Control</h1>
+          <div className="flex items-center gap-2">
+            <button className="flex items-center justify-center h-10 w-10 rounded-full hover:bg-gray-200">
+              <span className="material-symbols-outlined text-gray-600">notifications</span>
+            </button>
+            <img className="h-10 w-10 rounded-full object-cover" alt="User avatar" src="https://lh3.googleusercontent.com/a/ACg8ocJ_5_v-8-2-5-6-8-9-9-7-5-5-2-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-5-d" />
           </div>
         </div>
-      </div>
 
-      {/* Loading State */}
-      {loading && (
-        <div className="text-center py-12">
-          <div className="inline-block w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-          <p className="mt-4 text-gray-600 text-sm">Loading access data...</p>
+        <div className="p-4 space-y-4 border-b border-gray-200">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <label className="flex flex-col w-full lg:flex-1">
+              <div className="flex w-full flex-1 items-stretch rounded-lg h-12">
+                <div className="text-gray-500 flex bg-gray-100 items-center justify-center pl-4 rounded-l-lg">
+                  <span className="material-symbols-outlined">search</span>
+                </div>
+                <input
+                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-lg text-gray-900 focus:outline-0 focus:ring-2 focus:ring-primary/50 border-0 bg-gray-100 h-full placeholder:text-gray-500 px-4 text-base font-normal leading-normal"
+                  placeholder="Search by user, role, or credentials..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+            </label>
+            <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-primary text-white text-sm font-bold leading-normal tracking-wide gap-2 lg:hidden">
+              <span className="material-symbols-outlined">filter_list</span>
+              <span className="truncate">Filters</span>
+            </button>
+          </div>
+          <div className="hidden lg:flex items-center gap-3 flex-wrap">
+            <div className="relative w-full sm:w-auto md:w-[240px]">
+              <select
+                className="h-[44px] w-full appearance-none rounded border border-gray-300 bg-transparent pl-4 pr-10 focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                value={rootFilter}
+                onChange={(e) => {
+                  const newRoot = e.target.value;
+                  setRootFilter(newRoot);
+                  // Reset sub filter when root changes
+                  setSubFilter('');
+                  // Update available sub instances
+                  if (newRoot && allSubInstances.has(newRoot)) {
+                    setSubInstances(allSubInstances.get(newRoot) || []);
+                  } else {
+                    // Show all subs if no root filter
+                    const allSubs = new Set<string>();
+                    allSubInstances.forEach((subs) => subs.forEach((sub) => allSubs.add(sub)));
+                    setSubInstances(Array.from(allSubs).sort());
+                  }
+                }}
+              >
+                <option value="">Root Instance: All</option>
+                {rootInstances.map((root) => (
+                  <option key={root} value={root}>
+                    Root Instance: {root}
+                  </option>
+                ))}
+              </select>
+              <IoChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            </div>
+            <div className="relative w-full sm:w-auto md:w-[240px]">
+              <select
+                className="h-[44px] w-full appearance-none rounded border border-gray-300 bg-transparent pl-4 pr-10 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                value={subFilter}
+                onChange={(e) => setSubFilter(e.target.value)}
+                disabled={!rootFilter}
+              >
+                <option value="">Sub Instance: All</option>
+                {subInstances.map((sub) => (
+                  <option key={sub} value={sub}>
+                    Sub Instance: {sub}
+                  </option>
+                ))}
+              </select>
+              <IoChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            </div>
+          </div>
         </div>
-      )}
 
-      {/* Error State */}
-      {error && !loading && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-          <p className="font-medium text-sm">Error loading access data</p>
-          <p className="text-sm">{error}</p>
-          <button onClick={fetchUserAccess} className="mt-2 text-sm underline hover:no-underline">
-            Try again
-          </button>
-        </div>
-      )}
-
-      {/* Data Table */}
-      {!loading && !error && users.length > 0 && (
-        <div className="overflow-x-auto rounded-lg bg-white shadow">
-          <table className="w-full text-left">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="w-12 p-4 text-center text-sm font-bold text-gray-700">
-                  <IoChevronDown className="text-base align-middle inline-block" />
-                </th>
-                <th className="min-w-[280px] p-4 text-sm font-bold text-gray-700">USER & EMAIL</th>
-                <th className="w-[100px] p-4 text-center text-sm font-bold text-gray-700">ROLE</th>
-                <th className="hidden p-4 text-center text-sm font-bold text-gray-700 md:table-cell">ROOTS</th>
-                <th className="hidden p-4 text-center text-sm font-bold text-gray-700 md:table-cell">CREDENTIALS</th>
-                <th className="w-[90px] p-4 text-center text-sm font-bold text-gray-700">SHARED</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {users.map((user) => {
-                const isExpanded = expandedUsers.has(user.userId);
-                const totalCredentials = user.summary.credentialsOwned;
-                const sharedToMeCount = user.summary.credentialsSharedWithMe;
-
-                return (
-                  <React.Fragment key={user.userId}>
-                    {/* Main Row */}
-                    <tr className={`${isExpanded ? 'bg-blue-50/50' : 'hover:bg-gray-50'}`}>
-                      <td className="p-4 text-center">
-                        <button onClick={() => toggleUserExpanded(user.userId)}>
-                          {isExpanded ? (
-                            <IoChevronDown className="cursor-pointer text-blue-600" />
-                          ) : (
-                            <IoChevronForward className="cursor-pointer text-gray-500" />
-                          )}
-                        </button>
+        <div className="p-4">
+        {loading ? (
+           <div className="text-center py-12">
+           <div className="inline-block w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+           <p className="mt-4 text-gray-600 text-sm">Loading access data...</p>
+         </div>
+        ) : error ? (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+                <p className="font-medium text-sm">{error}</p>
+                <button onClick={fetchUserAccess} className="mt-2 text-sm underline hover:no-underline">
+                    Try again
+                </button>
+            </div>
+        ) : users.length === 0 ? (
+            <div className="text-center py-16 bg-white border border-gray-200 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Access Data Found</h3>
+                <p className="text-gray-600 text-sm">No users match your current filters</p>
+            </div>
+        ) : (
+          <>
+            <p className="text-sm text-gray-600 pb-4">Displaying {users.length} of {totalUsers} users</p>
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="text-xs text-gray-500 uppercase bg-gray-50">
+                  <tr>
+                    <th className="p-4 w-1/12" scope="col"><input className="form-checkbox rounded border-gray-300 bg-transparent checked:bg-primary focus:ring-primary/50" type="checkbox"/></th>
+                    <th className="p-4" scope="col">User</th>
+                    <th className="p-4" scope="col">Role</th>
+                    <th className="p-4 whitespace-nowrap" scope="col">Roots / Subs</th>
+                    <th className="p-4 whitespace-nowrap" scope="col">Owned Creds</th>
+                    <th className="p-4 whitespace-nowrap" scope="col">Shared With Me</th>
+                    <th className="p-4 whitespace-nowrap" scope="col">I Shared</th>
+                    <th className="p-4" scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((user) => (
+                    <tr
+                      key={user.userId}
+                      className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
+                      onClick={() => setSelectedUser(user)}
+                    >
+                      <td className="p-4"><input className="form-checkbox rounded border-gray-300 bg-transparent checked:bg-primary focus:ring-primary/50" type="checkbox"/></td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <img className="h-10 w-10 rounded-full object-cover" alt={`User avatar of ${user.userDetails.name}`} src={`https://i.pravatar.cc/150?u=${user.userId}`} />
+                          <div>
+                            <div className="font-semibold">{user.userDetails.name}</div>
+                            <div className="text-xs text-gray-500">{user.userDetails.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4"><span className={`px-2 py-1 text-xs font-medium rounded-full ${getRoleBadgeColor(user.userDetails.role)}`}>{user.userDetails.role}</span></td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-1.5"><span className="material-symbols-outlined md-18 text-gray-500">folder_open</span> {user.summary.rootsCreated} <span className="text-gray-500">/</span> {user.summary.subsCreated}</div>
                       </td>
                       <td className="p-4">
-                        <p className="text-sm font-bold text-gray-900">{user.userDetails.name}</p>
-                        <p className="text-xs text-gray-500 mt-1">{user.userDetails.email}</p>
+                        <div className="flex items-center gap-1.5"><span className="material-symbols-outlined md-18 text-gray-500">key</span> {user.summary.credentialsOwned}</div>
                       </td>
-                      <td className="p-4 text-center">
-                        <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${getRoleBadgeColor(user.userDetails.role)}`}>
-                          {user.userDetails.role.charAt(0).toUpperCase() + user.userDetails.role.slice(1)}
-                        </span>
-                      </td>
-                      <td className="hidden p-4 text-center text-blue-600 font-bold md:table-cell">
-                        {user.summary.rootsCreated}
-                      </td>
-                      <td className="hidden p-4 text-center text-blue-600 font-bold md:table-cell">
-                        {totalCredentials}
-                      </td>
-                      <td className={`p-4 text-center font-bold ${sharedToMeCount > 0 ? 'text-blue-600' : 'text-gray-500'}`}>
-                        {sharedToMeCount}
+                      <td className="p-4">{user.summary.credentialsSharedWithMe}</td>
+                      <td className="p-4">{user.summary.credentialsIShared}</td>
+                      <td className="p-4">
+                        <button className="p-2 rounded-full hover:bg-gray-200">
+                          <span className="material-symbols-outlined text-gray-600">more_vert</span>
+                        </button>
                       </td>
                     </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-                    {/* Expanded Accordion Content */}
-                    {isExpanded && (
-                      <tr>
-                        <td className="p-0" colSpan={6}>
-                          <div className="bg-gray-50 p-6">
-                            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 md:grid-cols-2">
-                              {/* Column 1 - My Instances (Root + Sub created by user) */}
-                              <div>
-                                <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-gray-700">
-                                  INSTANCES CREATED ({user.myInstances?.length || 0})
-                                </h3>
-                                <ul className="space-y-1 text-sm text-gray-700">
-                                  {user.myInstances && user.myInstances.length > 0 ? (
-                                    user.myInstances.map((instance) => (
-                                      <li key={instance.rootId}>
-                                        {instance.subInstances && instance.subInstances.length > 0 ? (
-                                          instance.subInstances.map((sub) => (
-                                            <div key={sub.subId} className="flex items-start py-0.5">
-                                              <span className="mr-2 text-gray-400 mt-0.5">•</span>
-                                              <span className="flex-1">
-                                                <span className="text-gray-900">{instance.rootName}</span>
-                                                <span className="text-gray-500"> - </span>
-                                                <span className="text-gray-700">{sub.subName}</span>
-                                              </span>
-                                            </div>
-                                          ))
-                                        ) : (
-                                          <div className="flex items-start py-0.5">
-                                            <span className="mr-2 text-gray-400 mt-0.5">•</span>
-                                            <span className="flex-1">
-                                              <span className="text-gray-900">{instance.rootName}</span>
-                                            </span>
-                                          </div>
-                                        )}
-                                      </li>
-                                    ))
-                                  ) : (
-                                    <li className="text-gray-500 italic">No instances created</li>
-                                  )}
-                                </ul>
-                              </div>
+            <div className="lg:hidden space-y-4">
+              {users.map((user) => (
+                <div key={user.userId} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-4">
+                      <img className="h-12 w-12 rounded-full object-cover" alt={`User avatar of ${user.userDetails.name}`} src={`https://i.pravatar.cc/150?u=${user.userId}`} />
+                      <div>
+                        <h3 className="font-bold">{user.userDetails.name}</h3>
+                        <p className="text-sm text-gray-500">{user.userDetails.email}</p>
+                        <span className={`mt-1 inline-block px-2 py-0.5 text-xs font-medium rounded-full ${getRoleBadgeColor(user.userDetails.role)}`}>{user.userDetails.role}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-center mt-4 pt-4 border-t border-gray-200">
+                    <div>
+                      <p className="font-semibold">{user.summary.rootsCreated}/{user.summary.subsCreated}</p>
+                      <p className="text-xs text-gray-500">Roots/Subs</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold">{user.summary.credentialsOwned}</p>
+                      <p className="text-xs text-gray-500">Owned</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold">{user.summary.credentialsSharedWithMe + user.summary.credentialsIShared}</p>
+                      <p className="text-xs text-gray-500">Shared</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedUser(user)}
+                    className="mt-4 w-full flex items-center justify-center h-10 px-4 bg-gray-100 rounded-lg text-sm font-bold text-gray-800 hover:bg-gray-200">
+                    View Details
+                  </button>
+                </div>
+              ))}
+            </div>
 
-                              {/* Column 2 - My Credentials (Credentials created by user) */}
-                              <div>
-                                <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-gray-700">
-                                  CREDENTIALS CREATED ({user.myCredentials?.length || 0})
-                                </h3>
-                                <ul className="space-y-2">
-                                  {user.myCredentials && user.myCredentials.length > 0 ? (
-                                    user.myCredentials.map((cred) => (
-                                      <li key={cred.credentialId}>
-                                        <div className="flex items-start py-0.5">
-                                          <span className="mr-2 text-gray-400 mt-0.5">•</span>
-                                          <div className="flex-1">
-                                            <p className="text-sm">
-                                              <span className="text-gray-900">{cred.rootInstance.rootName}</span>
-                                              <span className="text-gray-500"> - </span>
-                                              <span className="text-gray-700">{cred.subInstance.subName}</span>
-                                            </p>
-                                            {cred.sharedWithCount > 0 && (
-                                              <p className="text-xs italic text-blue-600 mt-0.5">
-                                                Shared with {cred.sharedWithCount} user{cred.sharedWithCount > 1 ? 's' : ''}
-                                              </p>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </li>
-                                    ))
-                                  ) : (
-                                    <li className="text-gray-500 italic">No credentials created</li>
-                                  )}
-                                </ul>
-                              </div>
-
-                              {/* Column 3 - Shared Access (Credentials shared WITH user) */}
-                              <div>
-                                <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-gray-700">
-                                  SHARED WITH ME ({user.sharedAccess?.length || 0})
-                                </h3>
-                                <ul className="space-y-2">
-                                  {user.sharedAccess && user.sharedAccess.length > 0 ? (
-                                    user.sharedAccess.map((access) => (
-                                      <li key={access.credentialId}>
-                                        <div className="flex items-start py-0.5">
-                                          <span className="mr-2 text-gray-400 mt-0.5">•</span>
-                                          <div className="flex-1">
-                                            <p className="text-sm">
-                                              <span className="text-gray-900">{access.rootInstance.rootName}</span>
-                                              <span className="text-gray-500"> - </span>
-                                              <span className="text-gray-700">{access.subInstance.subName}</span>
-                                            </p>
-                                            <p className="text-xs italic text-gray-500 mt-0.5">
-                                              Shared by: {access.sharedBy.name}
-                                            </p>
-                                          </div>
-                                        </div>
-                                      </li>
-                                    ))
-                                  ) : (
-                                    <li className="text-gray-500 italic">No shared access</li>
-                                  )}
-                                </ul>
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!loading && !error && users.length === 0 && (
-        <div className="text-center py-16 bg-white border border-gray-200 rounded-lg">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Access Data Found</h3>
-          <p className="text-gray-600 text-sm">No users match your current filters</p>
-        </div>
-      )}
-
-      {/* Pagination */}
-      {!loading && !error && users.length > 0 && (
-        <div className="mt-6 flex h-[64px] items-center justify-between rounded-lg border-t border-gray-200 bg-white px-6">
-          <p className="text-sm text-gray-600">
-            Showing {users.length} of {totalUsers} users
-          </p>
-          <nav className="flex items-center space-x-4 text-sm">
+            <div className="flex items-center justify-center lg:justify-between py-6">
+              <div className="hidden lg:flex items-center gap-2">
+                <span className="text-sm">Rows per page:</span>
+                <select className="form-select bg-transparent border-gray-300 rounded-md h-9 text-sm focus:ring-primary/50 focus:border-primary">
+                  <option>10</option>
+                  <option>25</option>
+                  <option>50</option>
+                </select>
+              </div>
+              <div className="flex items-center space-x-4 text-sm">
             <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
@@ -544,8 +577,43 @@ export const AccessControlPage: React.FC = () => {
             >
               Next <IoChevronForward className="text-lg" />
             </button>
-          </nav>
+          </div>
+            </div>
+          </>
+        )}
         </div>
+      </main>
+
+      {selectedUser && (
+        <aside className="fixed top-0 right-0 h-full w-[40%] max-w-2xl bg-background-light border-l border-gray-200 shadow-2xl transform translate-x-0 transition-transform duration-300 ease-in-out z-40">
+          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <img className="h-12 w-12 rounded-full object-cover" alt={`User avatar of ${selectedUser.userDetails.name}`} src={`https://i.pravatar.cc/150?u=${selectedUser.userId}`} />
+              <div>
+                <h2 className="text-lg font-bold">{selectedUser.userDetails.name}</h2>
+                <p className="text-sm text-gray-500">{selectedUser.userDetails.email}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSelectedUser(null)}
+                className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-200">
+                <span className="material-symbols-outlined text-gray-600">close</span>
+              </button>
+            </div>
+          </div>
+          <div className="border-b border-gray-200">
+            <nav aria-label="Tabs" className="flex -mb-px px-4">
+              <a href="#" onClick={() => setActiveTab('overview')} className={`shrink-0 border-b-2 px-1 py-3 text-sm font-medium ${activeTab === 'overview' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'}`}>Overview</a>
+              <a href="#" onClick={() => setActiveTab('instances')} className={`shrink-0 border-b-2 px-4 py-3 text-sm font-medium ${activeTab === 'instances' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'}`}>Instances</a>
+              <a href="#" onClick={() => setActiveTab('owned_credentials')} className={`shrink-0 border-b-2 px-4 py-3 text-sm font-medium ${activeTab === 'owned_credentials' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'}`}>Owned Credentials</a>
+              <a href="#" onClick={() => setActiveTab('shared_with_user')} className={`shrink-0 border-b-2 px-4 py-3 text-sm font-medium ${activeTab === 'shared_with_user' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'}`}>Shared With User</a>
+            </nav>
+          </div>
+          <div className="p-6 space-y-6 overflow-y-auto h-[calc(100vh-130px)]">
+            {renderDetailContent()}
+          </div>
+        </aside>
       )}
     </div>
   );
