@@ -25,7 +25,7 @@ export interface CredentialCardProps {
   createdAt?: string;
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
-  onShare?: (credentialId: string, userId: string) => void;
+  onShare?: (credentialId: string, userId: string | string[]) => void;
   onRevoke?: (credentialId: string, userId: string) => void;
   onShowDetails?: (id: string) => void;
   onDecrypt?: (id: string) => Promise<{ fields?: CredentialField[]; username?: string; password?: string }>;
