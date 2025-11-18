@@ -145,9 +145,11 @@ export interface UpdateCredentialPayload {
 /**
  * Share Credential Payload
  * For POST /api/users/credentials/:id/share
+ * Supports both single and bulk sharing
  */
 export interface ShareCredentialPayload {
-  userId: string;
+  userId?: string;      // For single user (backward compatibility)
+  userIds?: string[];   // For multiple users (bulk share)
 }
 
 /**

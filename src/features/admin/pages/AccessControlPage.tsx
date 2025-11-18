@@ -150,7 +150,14 @@ export const AccessControlPage: React.FC = () => {
       if (rootFilter) params.rootName = rootFilter;
       if (subFilter) params.subName = subFilter;
 
+      console.log('=== FRONTEND: Fetching with filters ===');
+      console.log('rootFilter:', rootFilter);
+      console.log('subFilter:', subFilter);
+      console.log('params:', params);
+
       const response = await adminApi.getUserAccess(params);
+      
+      console.log('Response users count:', response.data.users.length);
       
       setUsers(response.data.users);
       setTotalPages(response.pagination.totalPages);

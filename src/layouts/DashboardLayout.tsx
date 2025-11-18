@@ -35,17 +35,24 @@ const DashboardLayout: React.FC = () => {
   const handleToggleSidebar = () => {
     if (isMobile) {
       setIsSidebarOpen(!isSidebarOpen);
+      // Reset hover expansion when hamburger is clicked
+      setIsHoverExpanded(false);
     } else {
       setIsSidebarCollapsed(!isSidebarCollapsed);
+      // Reset hover expansion when toggling collapsed state
+      setIsHoverExpanded(false);
     }
   };
 
   const handleNavigate = (path: string) => {
     navigate(path);
     if (isMobile) {
+      // Close sidebar and reset expansion on mobile
       setIsSidebarOpen(false);
+      setIsHoverExpanded(false);
     } else {
-      // On desktop, collapse after navigation
+      // On desktop: collapse sidebar and reset hover expansion after navigation
+      setIsSidebarCollapsed(true);
       setIsHoverExpanded(false);
     }
   };
@@ -62,9 +69,15 @@ const DashboardLayout: React.FC = () => {
     }
   };
 
-  const handleLogout = () => {
-    dispatch(logout() as any);
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await dispatch(logout() as any);
+      // The logout action will handle the redirect
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force redirect even if logout fails
+      navigate('/login', { replace: true });
+    }
   };
 
   const sidebarComponent = (
@@ -86,7 +99,7 @@ const DashboardLayout: React.FC = () => {
     <ProtectedRoute requireVerification={true}>
       <div className="h-screen w-screen bg-gray-50 flex flex-col overflow-hidden">
         {/* Navbar */}
-        <header className="bg-white h-16 flex items-center justify-between px-4 sm:px-6 shrink-0 z-30 border-b border-gray-200 shadow-sm">
+        <header className="bg-white h-16 flex items-center justify-between px-4 sm:px-6 shrink-0 z-10 shadow-sm">
           {/* Left Section */}
           <div className="flex items-center gap-3">
             <button 
@@ -126,7 +139,7 @@ const DashboardLayout: React.FC = () => {
         <div className="flex flex-1 overflow-hidden">
           {/* Desktop Sidebar */}
           {!isMobile && (
-            <div className="z-10 h-full shrink-0   bg-white">
+            <div className="z-10 h-full shrink-0 bg-white shadow-sm">
               {sidebarComponent}
             </div>
           )}

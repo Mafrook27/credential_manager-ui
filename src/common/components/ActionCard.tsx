@@ -10,7 +10,7 @@ interface ActionCardProps {
   sharedUsers?: User[];
   searchPlaceholder?: string;
   onSearch?: (query: string) => void;
-  onShare?: (userId: string) => void;
+  onShare?: (userId: string | string[]) => void;  // Support both single and multiple
   onRevoke?: (userId: string) => void;
   onApprove?: (userId: string) => void;
   onReject?: (userId: string) => void;
@@ -40,7 +40,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'view' | 'select'>('view');
-  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set()); // For share mode (multiple)
   const [showSuggestions, setShowSuggestions] = useState(false);
   
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -59,34 +59,43 @@ export const ActionCard: React.FC<ActionCardProps> = ({
   const clearSearch = () => {
     setSearchQuery('');
     setShowSuggestions(false);
-    setSelectedUser(null);
   };
 
   const handleUserSelection = (userId: string, userName?: string) => {
     if (mode === 'approve' && userName) {
       setSearchQuery(userName);
-      setSelectedUser(userId);
       setShowSuggestions(false);
-    } else {
-      setSelectedUser(prev => (prev === userId ? null : userId));
+    } else if (mode === 'share') {
+      // Multiple selection for share mode
+      setSelectedUsers(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(userId)) {
+          newSet.delete(userId);
+        } else {
+          newSet.add(userId);
+        }
+        return newSet;
+      });
     }
   };
 
   const handleShareClick = () => {
     setViewMode('select');
-    setSelectedUser(null);
+    setSelectedUsers(new Set());
   };
 
   const handleBackToView = () => {
     setViewMode('view');
-    setSelectedUser(null);
+    setSelectedUsers(new Set());
     setSearchQuery('');
     setShowSuggestions(false);
   };
 
   const handleConfirmShare = () => {
-    if (selectedUser && onShare) {
-      onShare(selectedUser);
+    if (selectedUsers.size > 0 && onShare) {
+      // Share with all selected users in a single call
+      const userIds = Array.from(selectedUsers);
+      onShare(userIds);
       handleBackToView();
     }
   };
@@ -195,32 +204,37 @@ export const ActionCard: React.FC<ActionCardProps> = ({
         // viewMode === 'select' - Show available users to share with
         return availableUsers.length > 0 ? (
           <div>
-            {availableUsers.map(user => (
-              <div
-                key={user.id}
-                onClick={() => handleUserSelection(user.id)}
-                className={`flex items-center justify-between gap-3 px-4 sm:px-5 py-3 sm:py-3.5 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 cursor-pointer ${
-                  selectedUser === user.id ? 'bg-blue-50 border-blue-200' : ''
-                }`}
-              >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <span className="text-primary font-semibold text-sm sm:text-base">{user.name.charAt(0).toUpperCase()}</span>
+            {availableUsers.map(user => {
+              const isSelected = selectedUsers.has(user.id);
+              return (
+                <div
+                  key={user.id}
+                  onClick={() => handleUserSelection(user.id)}
+                  className={`flex items-center justify-between gap-3 px-4 sm:px-5 py-3 sm:py-3.5 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 cursor-pointer ${
+                    isSelected ? 'bg-blue-50 border-blue-200' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="text-primary font-semibold text-sm sm:text-base">{user.name.charAt(0).toUpperCase()}</span>
+                    </div>
+                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                      <p className="text-gray-900 text-sm sm:text-base font-medium truncate leading-snug">{user.name}</p>
+                      <p className="text-gray-500 text-xs sm:text-sm break-words overflow-hidden leading-snug mt-0.5" style={{ wordBreak: 'break-word', maxHeight: '2.5em' }}>{user.email}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <p className="text-gray-900 text-sm sm:text-base font-medium truncate leading-snug">{user.name}</p>
-                    <p className="text-gray-500 text-xs sm:text-sm break-words overflow-hidden leading-snug mt-0.5" style={{ wordBreak: 'break-word', maxHeight: '2.5em' }}>{user.email}</p>
+                  <div className={`h-5 w-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+                    isSelected ? 'bg-primary border-primary' : 'border-gray-300'
+                  }`}>
+                    {isSelected && (
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
                   </div>
                 </div>
-                {selectedUser === user.id && (
-                  <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center shrink-0">
-                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-8 sm:py-10 md:py-12 px-4">
@@ -271,7 +285,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
             </button>
           )}
           <h1 className="text-gray-900 text-base sm:text-lg font-semibold truncate">
-            {mode === 'share' && viewMode === 'select' ? 'Select a User to Share' : title}
+            {mode === 'share' && viewMode === 'select' ? 'Select Users to Share' : title}
           </h1>
         </div>
         <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-full transition-colors shrink-0">
@@ -308,8 +322,11 @@ export const ActionCard: React.FC<ActionCardProps> = ({
 
       <div className="flex-grow overflow-y-auto">
         {isLoading && !loadingUserId ? (
-          <div className="flex items-center justify-center py-6">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+          <div className="d-flex flex-column align-items-center justify-content-center py-5">
+            <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="text-muted mt-3 mb-0 small">Loading users...</p>
           </div>
         ) : (
           renderContent()
@@ -334,10 +351,10 @@ export const ActionCard: React.FC<ActionCardProps> = ({
         {mode === 'share' && viewMode === 'select' && (
           <button
             onClick={handleConfirmShare}
-            disabled={!selectedUser || isLoading}
+            disabled={selectedUsers.size === 0 || isLoading}
             className="px-5 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base font-medium rounded-lg bg-primary text-white hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
           >
-            Share
+            Share {selectedUsers.size > 0 && `(${selectedUsers.size})`}
           </button>
         )}
       </div>

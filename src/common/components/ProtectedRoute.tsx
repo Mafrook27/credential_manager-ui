@@ -25,6 +25,27 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // ALL HOOKS MUST BE AT THE TOP - BEFORE ANY CONDITIONAL RETURNS
   
+  // Prevent browser back button after logout by checking on every render
+  useEffect(() => {
+    // If not authenticated, prevent caching
+    if (!isAuthenticated && !loading) {
+      // Clear any cached data
+      window.history.replaceState(null, '', window.location.href);
+      
+      // Prevent back button navigation
+      const handlePopState = () => {
+        window.history.replaceState(null, '', '/login');
+        window.location.replace('/login');
+      };
+      
+      window.addEventListener('popstate', handlePopState);
+      
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+      };
+    }
+  }, [isAuthenticated, loading]);
+  
   // Check if user is blocked
   useEffect(() => {
     if (isActive === false && isAuthenticated && !hasShownBlockedAlert.current) {

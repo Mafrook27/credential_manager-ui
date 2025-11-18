@@ -4,6 +4,9 @@ import { userApi } from './../api/user.api';
 import type { User } from './../api/user.api';
 import { toast } from './../../../common/utils/toast';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { logout } from '../../auth/redux/actions';
+import type { AppDispatch } from '../../../app/store';
 import { MdLock, MdEdit, MdLogout, MdSchedule, MdDelete } from 'react-icons/md';
 import { formatLastLogin } from '../../../utils/formatLastLogin';
 import { shouldShowError, getErrorMessage } from '../../../common/utils/errorHandler';
@@ -15,6 +18,7 @@ import { ConfirmModal } from '../../../common/modals/ConfirmModal';
 export const Profile: React.FC = () => {
   const { user: authUser, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -22,6 +26,18 @@ export const Profile: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // Logout handler
+  const handleLogout = async () => {
+    try {
+      await dispatch(logout());
+      // The logout action will handle the redirect
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force redirect even if logout fails
+      navigate('/login', { replace: true });
+    }
+  };
 
   // Button configuration
   const actionButtons = [
@@ -88,10 +104,6 @@ export const Profile: React.FC = () => {
       }
     })();
   }, [isAuthenticated, authUser, navigate]);
-
-  function handleLogout() {
-    navigate('/login');
-  }
 
   const handleUpdateProfile = async (id: string, name: string, email: string) => {
     if (!id) {

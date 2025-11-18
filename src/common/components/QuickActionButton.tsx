@@ -85,7 +85,7 @@ export const QuickActionButton: React.FC<QuickActionButtonProps> = ({
           )}
         </div>
       </div>
-      {badge && (
+      {badge !== undefined && badge !== 0 && (
         <span 
           className="badge flex-shrink-0 ms-2"
           style={{

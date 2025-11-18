@@ -12,6 +12,7 @@ import { instanceApi } from '../../../common/api/instanceApi';
 import type { RootInstance, SubInstance } from '../../../common/api/instanceApi';
 import type { User, UserRole } from '../../admin/types/user.types';
 import { shouldShowError, getErrorMessage } from '../../../common/utils/errorHandler';
+import { useAuth } from '../../../common/hooks/useAuth';
 
 // ========== TYPES ==========
 interface ApiCredential {
@@ -39,6 +40,8 @@ interface ApiCredential {
 
 // ========== COMPONENT ==========
 export const UserCredentialPage: React.FC = () => {
+  const { user } = useAuth();
+  
   // State
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedRootInstance, setSelectedRootInstance] = useState<RootInstance | null>(null);
@@ -196,15 +199,26 @@ export const UserCredentialPage: React.FC = () => {
 
       // ✅ Map with type casting
       const mappedUsers: User[] = filteredUsers
-        .filter((user: unknown) => {
-          if (!user) return false;
-          const u = user as {
+        .filter((userData: unknown) => {
+          if (!userData) return false;
+          const u = userData as {
+            _id?: string;
+            id?: string;
             isVerified?: boolean;
             isActive?: boolean;
             isDeleted?: boolean;
+            role?: string;
           };
+          const userId = u._id || u.id;
+          const currentUserId = user?.id || user?._id;  // Fix: user object has 'id' not '_id'
+          
           // Only show verified, active, non-deleted users
-          return u.isVerified === true && u.isActive === true && u.isDeleted !== true;
+          // Exclude admin users and current logged-in user
+          return u.isVerified === true && 
+            u.isActive === true && 
+            u.isDeleted !== true &&
+            u.role !== 'admin' &&
+            userId !== currentUserId;
         })
         .map((user: unknown) => {
           if (!user) return null as unknown as User;
@@ -301,10 +315,17 @@ export const UserCredentialPage: React.FC = () => {
   }, []);
 
   const handleShare = useCallback(
-    async (credentialId: string, userId: string) => {
+    async (credentialId: string, userIdOrIds: string | string[]) => {
       try {
-        await userCredentialApi.shareCredential(credentialId, { userId });
-        toast.success('Credential shared successfully');
+        // Support both single and multiple user IDs
+        const userIds = Array.isArray(userIdOrIds) ? userIdOrIds : [userIdOrIds];
+        
+        await userCredentialApi.shareCredential(credentialId, { userIds });
+        
+        const message = userIds.length > 1 
+          ? `Credential shared with ${userIds.length} users successfully`
+          : 'Credential shared successfully';
+        toast.success(message);
         fetchCredentials();
       } catch (err: unknown) {
         if (shouldShowError(err)) {

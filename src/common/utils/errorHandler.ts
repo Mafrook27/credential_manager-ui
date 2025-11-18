@@ -1,5 +1,3 @@
-// Error handler utility for API errors
-// This helps TypeScript understand error types properly
 
 interface ApiError {
   response?: {
@@ -14,10 +12,7 @@ interface ApiError {
   handledByInterceptor?: boolean;
 }
 
-/**
- * Check if error should be displayed to user
- * Returns false if error is already handled by interceptor (auth errors)
- */
+
 export function shouldShowError(error: unknown): boolean {
   const apiError = error as ApiError;
   
@@ -30,12 +25,6 @@ export function shouldShowError(error: unknown): boolean {
   return true;
 }
 
-/**
- * Safely extracts error message from caught errors
- * @param error - The caught error (unknown type)
- * @param defaultMessage - Fallback message if extraction fails
- * @returns A user-friendly error message
- */
 export function getErrorMessage(error: unknown, defaultMessage = 'An error occurred'): string {
   // Don't return message if error is handled by interceptor
   if (!shouldShowError(error)) {
@@ -66,9 +55,7 @@ export function getErrorMessage(error: unknown, defaultMessage = 'An error occur
   return defaultMessage;
 }
 
-/**
- * Type guard to check if error is an API error with response
- */
+
 export function isApiError(error: unknown): error is ApiError {
   return (
     error !== null &&

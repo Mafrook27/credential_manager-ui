@@ -396,9 +396,9 @@ const AdminDashboard: React.FC = () => {
               label="Verify users" 
               icon={<MdBarChart />} 
               onClick={handleOpenApprovalModal} 
-              badge={stats?.unverifiedUsers || 0} 
+              badge={stats?.unverifiedUsers} 
               iconBgColor="#d1fae5" 
-              iconColor="#16a34a" 
+              iconColor="#16a34a"
             />
           </div>
           <div className="col-12 col-sm-6 col-lg-4 col-xl-3">

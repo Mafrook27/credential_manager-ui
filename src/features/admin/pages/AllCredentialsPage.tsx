@@ -11,6 +11,7 @@ import { toast } from '../../../common/utils/toast';
 import { getErrorMessage, shouldShowError } from '../../../common/utils/errorHandler';
 import { IoSearch } from 'react-icons/io5';
 import { useDebounce } from '../../../common/hooks/useDebounce';
+import { useAuth } from '../../../common/hooks/useAuth';
 
 interface UserData {
   _id?: string;
@@ -48,6 +49,7 @@ export const AllCredentialsPage: React.FC = () => {
   const dispatch = useDispatch();
   const searchQuery = useSelector(selectSearchQuery);
   const isSearchActive = useSelector(selectIsSearchActive);
+  const { user } = useAuth();
 
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [loading, setLoading] = useState(false);
@@ -145,21 +147,26 @@ export const AllCredentialsPage: React.FC = () => {
       
       // Map to User type format expected by ActionCard
       const mappedUsers: User[] = users
-        .filter((user: UserData) => 
+        .filter((userData: UserData) => {
+          const userId = userData._id || userData.id;
+          const currentUserId = user?.id || user?._id;  // Fix: user object has 'id' not '_id'
           // Only show verified, active, non-deleted users
-          user.isVerified === true && 
-          user.isActive === true && 
-          user.isDeleted !== true
-        )
-        .map((user: UserData) => ({
-          id: user._id || user.id || '',
-          name: user.name,
-          email: user.email,
-          role: user.role as 'admin' | 'user',
-          status: (!user.isActive ? 'inactive' : (user.isVerified ? 'active' : 'pending')) as UserStatus,
-          isVerified: user.isVerified,
-          isActive: user.isActive,
-          createdAt: user.createdAt,
+          // Exclude admin users and current logged-in user
+          return userData.isVerified === true && 
+            userData.isActive === true && 
+            userData.isDeleted !== true &&
+            userData.role !== 'admin' &&
+            userId !== currentUserId;
+        })
+        .map((userData: UserData) => ({
+          id: userData._id || userData.id || '',
+          name: userData.name,
+          email: userData.email,
+          role: userData.role as 'admin' | 'user',
+          status: (!userData.isActive ? 'inactive' : (userData.isVerified ? 'active' : 'pending')) as UserStatus,
+          isVerified: userData.isVerified,
+          isActive: userData.isActive,
+          createdAt: userData.createdAt,
         }));
       setAvailableUsers(mappedUsers);
     } catch (err) {
@@ -228,10 +235,17 @@ export const AllCredentialsPage: React.FC = () => {
     }
   };
 
-  const handleShare = async (credentialId: string, userId: string) => {
+  const handleShare = async (credentialId: string, userIdOrIds: string | string[]) => {
     try {
-      await shareCredential(credentialId, { userId });
-      toast.success('Credential shared successfully');
+      // Support both single and multiple user IDs
+      const userIds = Array.isArray(userIdOrIds) ? userIdOrIds : [userIdOrIds];
+      
+      await shareCredential(credentialId, { userIds });
+      
+      const message = userIds.length > 1 
+        ? `Credential shared with ${userIds.length} users successfully`
+        : 'Credential shared successfully';
+      toast.success(message);
       fetchCredentials();
     } catch (err) {
       if (shouldShowError(err)) {

@@ -110,7 +110,8 @@ export interface DeleteCredentialResponse {
 }
 
 export interface ShareCredentialData {
-  userId: string;
+  userId?: string;      // For single user (backward compatibility)
+  userIds?: string[];   // For multiple users (bulk share)
 }
 
 export interface ShareCredentialResponse {

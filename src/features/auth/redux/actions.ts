@@ -45,6 +45,14 @@ export const logout = () => async (dispatch: Dispatch) => {
     
     await logoutAPI();
     dispatch(logoutSuccess());
+    
+    // Clear browser history and prevent back button
+    window.history.replaceState(null, '', '/login');
+    
+    // Force redirect to login page
+    setTimeout(() => {
+      window.location.replace('/login');
+    }, 100);
   } catch (error: any) {
     // Even if logout API fails, clear local state
     console.error('Logout API error:', error);
@@ -52,6 +60,14 @@ export const logout = () => async (dispatch: Dispatch) => {
     // Still reset refresh state
     resetRefreshState();
     dispatch(logoutSuccess());
+    
+    // Clear browser history and prevent back button
+    window.history.replaceState(null, '', '/login');
+    
+    // Force redirect to login page
+    setTimeout(() => {
+      window.location.replace('/login');
+    }, 100);
   }
 };
 
