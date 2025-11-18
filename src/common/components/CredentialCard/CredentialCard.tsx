@@ -514,8 +514,9 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
               emptyStateMessage="No users available to share with"
               isLoading={isLoadingUsers}
             />
-          </div>
+          </div> 
         </div>
+        // j
       )}
 
       {/* Delete Confirmation Modal */}
