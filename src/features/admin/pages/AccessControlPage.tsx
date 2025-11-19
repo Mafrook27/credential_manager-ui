@@ -655,6 +655,7 @@ export const AccessControlPage: React.FC = () => {
                       }}
                       className="border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                     >
+                     <option value={2}>2</option>
                       <option value={5}>5</option>
                       <option value={10}>10</option>
                       <option value={20}>20</option>
@@ -711,7 +712,7 @@ export const AccessControlPage: React.FC = () => {
           {/* Header - Sticky */}
           <div className="p-3 sm:p-4 border-b border-gray-200 flex items-center justify-between bg-white flex-shrink-0">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-              <UserAvatar name={selectedUser.userDetails.name} size={40} className="sm:w-12 sm:h-12" />
+              <UserAvatar name={selectedUser.userDetails.name} size={40} />
               <div className="min-w-0 flex-1">
                 <h2 className="text-base sm:text-lg font-bold text-gray-900 truncate">{selectedUser.userDetails.name}</h2>
                 <p className="text-xs sm:text-sm text-gray-500 truncate">{selectedUser.userDetails.email}</p>
