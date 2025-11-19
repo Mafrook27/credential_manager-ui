@@ -238,22 +238,22 @@ export const AccessControlPage: React.FC = () => {
     switch (activeTab) {
       case 'overview':
         return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
-                <p className="text-xs sm:text-sm text-gray-500 mb-1">Role</p>
-                <p className="font-semibold text-base sm:text-lg text-gray-900 capitalize">{selectedUser.userDetails.role}</p>
+          <div className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+              <div className="bg-white p-2.5 sm:p-3 md:p-4 rounded-lg border border-gray-200">
+                <p className="text-xs text-gray-500 mb-1">Role</p>
+                <p className="font-semibold text-sm sm:text-base md:text-lg text-gray-900 capitalize break-words">{selectedUser.userDetails.role}</p>
               </div>
-              <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
-                <p className="text-xs sm:text-sm text-gray-500 mb-1">Status</p>
-                <p className="font-semibold text-base sm:text-lg text-green-600">Active</p>
+              <div className="bg-white p-2.5 sm:p-3 md:p-4 rounded-lg border border-gray-200">
+                <p className="text-xs text-gray-500 mb-1">Status</p>
+                <p className="font-semibold text-sm sm:text-base md:text-lg text-green-600">Active</p>
               </div>
             </div>
 
             {selectedUser.userDetails.lastLogin && (
-              <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
-                <p className="text-xs sm:text-sm text-gray-500 mb-1">Last Login</p>
-                <p className="font-semibold text-sm text-gray-900">
+              <div className="bg-white p-2.5 sm:p-3 md:p-4 rounded-lg border border-gray-200">
+                <p className="text-xs text-gray-500 mb-1">Last Login</p>
+                <p className="font-semibold text-xs sm:text-sm text-gray-900 break-words">
                   {new Date(selectedUser.userDetails.lastLogin).toLocaleString('en-US', {
                     year: 'numeric',
                     month: 'short',
@@ -265,28 +265,28 @@ export const AccessControlPage: React.FC = () => {
               </div>
             )}
             
-            <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Summary</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">Root Instances Created</span>
-                  <span className="text-sm font-semibold text-gray-900">{selectedUser.summary.rootsCreated}</span>
+            <div className="bg-white p-2.5 sm:p-3 md:p-4 rounded-lg border border-gray-200">
+              <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3">Summary</h3>
+              <div className="space-y-1.5 sm:space-y-2">
+                <div className="flex justify-between items-center py-1.5 sm:py-2 border-b border-gray-100">
+                  <span className="text-xs sm:text-sm text-gray-600">Root Instances Created</span>
+                  <span className="text-xs sm:text-sm font-semibold text-gray-900">{selectedUser.summary.rootsCreated}</span>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">Sub Instances Created</span>
-                  <span className="text-sm font-semibold text-gray-900">{selectedUser.summary.subsCreated}</span>
+                <div className="flex justify-between items-center py-1.5 sm:py-2 border-b border-gray-100">
+                  <span className="text-xs sm:text-sm text-gray-600">Sub Instances Created</span>
+                  <span className="text-xs sm:text-sm font-semibold text-gray-900">{selectedUser.summary.subsCreated}</span>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">Credentials Owned</span>
-                  <span className="text-sm font-semibold text-gray-900">{selectedUser.summary.credentialsOwned}</span>
+                <div className="flex justify-between items-center py-1.5 sm:py-2 border-b border-gray-100">
+                  <span className="text-xs sm:text-sm text-gray-600">Credentials Owned</span>
+                  <span className="text-xs sm:text-sm font-semibold text-gray-900">{selectedUser.summary.credentialsOwned}</span>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">Credentials Shared With Me</span>
-                  <span className="text-sm font-semibold text-gray-900">{selectedUser.summary.credentialsSharedWithMe}</span>
+                <div className="flex justify-between items-center py-1.5 sm:py-2 border-b border-gray-100">
+                  <span className="text-xs sm:text-sm text-gray-600">Credentials Shared With Me</span>
+                  <span className="text-xs sm:text-sm font-semibold text-gray-900">{selectedUser.summary.credentialsSharedWithMe}</span>
                 </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-sm text-gray-600">Credentials I Shared</span>
-                  <span className="text-sm font-semibold text-gray-900">{selectedUser.summary.credentialsIShared}</span>
+                <div className="flex justify-between items-center py-1.5 sm:py-2">
+                  <span className="text-xs sm:text-sm text-gray-600">Credentials I Shared</span>
+                  <span className="text-xs sm:text-sm font-semibold text-gray-900">{selectedUser.summary.credentialsIShared}</span>
                 </div>
               </div>
             </div>
@@ -294,22 +294,22 @@ export const AccessControlPage: React.FC = () => {
         );
       case 'instances':
         return (
-          <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Created Instances</h3>
-            <div className="space-y-2">
+          <div className="bg-white p-2.5 sm:p-3 md:p-4 rounded-lg border border-gray-200">
+            <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3">Created Instances</h3>
+            <div className="space-y-1.5 sm:space-y-2">
               {selectedUser.myInstances && selectedUser.myInstances.length > 0 ? (
                 selectedUser.myInstances.map((instance) => (
                   <div key={instance.rootId} className="border-b border-gray-100 last:border-0 pb-2 last:pb-0">
                     {instance.subInstances && instance.subInstances.length > 0 ? (
                       instance.subInstances.map((sub) => (
-                        <div key={sub.subId} className="py-1.5 text-sm">
+                        <div key={sub.subId} className="py-1 sm:py-1.5 text-xs sm:text-sm break-words">
                           <span className="font-medium text-gray-900">{instance.rootName}</span>
                           <span className="text-gray-400"> → </span>
                           <span className="text-gray-700">{sub.subName}</span>
                         </div>
                       ))
                     ) : (
-                      <div className="py-1.5 text-sm font-medium text-gray-900">{instance.rootName}</div>
+                      <div className="py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-gray-900 break-words">{instance.rootName}</div>
                     )}
                   </div>
                 ))
@@ -321,50 +321,50 @@ export const AccessControlPage: React.FC = () => {
         );
       case 'owned_credentials':
         return (
-          <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Owned Credentials</h3>
-            <div className="space-y-2">
+          <div className="bg-white p-2.5 sm:p-3 md:p-4 rounded-lg border border-gray-200">
+            <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3">Owned Credentials</h3>
+            <div className="space-y-1.5 sm:space-y-2">
               {selectedUser.myCredentials && selectedUser.myCredentials.length > 0 ? (
                 selectedUser.myCredentials.map((cred) => (
-                  <div key={cred.credentialId} className="border-b border-gray-100 last:border-0 pb-2 last:pb-0 py-1.5">
-                    <p className="text-sm">
+                  <div key={cred.credentialId} className="border-b border-gray-100 last:border-0 pb-1.5 sm:pb-2 last:pb-0 py-1 sm:py-1.5">
+                    <p className="text-xs sm:text-sm break-words">
                       <span className="font-medium text-gray-900">{cred.rootInstance.rootName}</span>
                       <span className="text-gray-400"> → </span>
                       <span className="text-gray-700">{cred.subInstance.subName}</span>
                     </p>
                     {cred.sharedWithCount > 0 && (
-                      <p className="text-xs text-blue-600 mt-1">
+                      <p className="text-xs text-blue-600 mt-0.5 sm:mt-1">
                         Shared with {cred.sharedWithCount} user{cred.sharedWithCount > 1 ? 's' : ''}
                       </p>
                     )}
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-gray-500 italic py-2">No credentials created</p>
+                <p className="text-xs sm:text-sm text-gray-500 italic py-2">No credentials created</p>
               )}
             </div>
           </div>
         );
       case 'shared_with_user':
         return (
-          <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Shared With User</h3>
-            <div className="space-y-2">
+          <div className="bg-white p-2.5 sm:p-3 md:p-4 rounded-lg border border-gray-200">
+            <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-2 sm:mb-3">Shared With User</h3>
+            <div className="space-y-1.5 sm:space-y-2">
               {selectedUser.sharedAccess && selectedUser.sharedAccess.length > 0 ? (
                 selectedUser.sharedAccess.map((access) => (
-                  <div key={access.credentialId} className="border-b border-gray-100 last:border-0 pb-2 last:pb-0 py-1.5">
-                    <p className="text-sm">
+                  <div key={access.credentialId} className="border-b border-gray-100 last:border-0 pb-1.5 sm:pb-2 last:pb-0 py-1 sm:py-1.5">
+                    <p className="text-xs sm:text-sm break-words">
                       <span className="font-medium text-gray-900">{access.rootInstance.rootName}</span>
                       <span className="text-gray-400"> → </span>
                       <span className="text-gray-700">{access.subInstance.subName}</span>
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 mt-0.5 sm:mt-1 break-words">
                       Shared by: {access.sharedBy.name}
                     </p>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-gray-500 italic py-2">No shared access</p>
+                <p className="text-xs sm:text-sm text-gray-500 italic py-2">No shared access</p>
               )}
             </div>
           </div>
@@ -709,28 +709,28 @@ export const AccessControlPage: React.FC = () => {
       {selectedUser && (
         <aside className="fixed top-0 right-0 h-full w-full sm:w-[90%] md:w-[60%] lg:w-[40%] max-w-2xl bg-white border-l border-gray-200 shadow-2xl z-50 flex flex-col">
           {/* Header - Sticky */}
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-white flex-shrink-0">
-            <div className="flex items-center gap-3 min-w-0">
-              <UserAvatar name={selectedUser.userDetails.name} size={48} />
-              <div className="min-w-0">
-                <h2 className="text-lg font-bold text-gray-900 truncate">{selectedUser.userDetails.name}</h2>
-                <p className="text-sm text-gray-500 truncate">{selectedUser.userDetails.email}</p>
+          <div className="p-3 sm:p-4 border-b border-gray-200 flex items-center justify-between bg-white flex-shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+              <UserAvatar name={selectedUser.userDetails.name} size={40} className="sm:w-12 sm:h-12" />
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base sm:text-lg font-bold text-gray-900 truncate">{selectedUser.userDetails.name}</h2>
+                <p className="text-xs sm:text-sm text-gray-500 truncate">{selectedUser.userDetails.email}</p>
               </div>
             </div>
             <button
               onClick={() => setSelectedUser(null)}
-              className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900 flex-shrink-0 ml-2"
+              className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900 flex-shrink-0 ml-2"
             >
-              <span className="text-2xl">×</span>
+              <span className="text-xl sm:text-2xl">×</span>
             </button>
           </div>
 
           {/* Tabs - No Scroll */}
-          <div className="border-b border-gray-200 bg-white flex-shrink-0">
-            <nav aria-label="Tabs" className="flex">
+          <div className="border-b border-gray-200 bg-white flex-shrink-0 overflow-x-auto">
+            <nav aria-label="Tabs" className="flex min-w-max sm:min-w-0">
               <button 
                 onClick={() => setActiveTab('overview')} 
-                className={`flex-1 border-b-2 py-3 text-sm font-medium transition-colors ${
+                className={`flex-1 border-b-2 py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
                   activeTab === 'overview' 
                     ? 'border-blue-600 text-blue-600' 
                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
@@ -740,7 +740,7 @@ export const AccessControlPage: React.FC = () => {
               </button>
               <button 
                 onClick={() => setActiveTab('instances')} 
-                className={`flex-1 border-b-2 py-3 text-sm font-medium transition-colors ${
+                className={`flex-1 border-b-2 py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
                   activeTab === 'instances' 
                     ? 'border-blue-600 text-blue-600' 
                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
@@ -750,7 +750,7 @@ export const AccessControlPage: React.FC = () => {
               </button>
               <button 
                 onClick={() => setActiveTab('owned_credentials')} 
-                className={`flex-1 border-b-2 py-3 text-sm font-medium transition-colors ${
+                className={`flex-1 border-b-2 py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
                   activeTab === 'owned_credentials' 
                     ? 'border-blue-600 text-blue-600' 
                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
@@ -760,7 +760,7 @@ export const AccessControlPage: React.FC = () => {
               </button>
               <button 
                 onClick={() => setActiveTab('shared_with_user')} 
-                className={`flex-1 border-b-2 py-3 text-sm font-medium transition-colors ${
+                className={`flex-1 border-b-2 py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
                   activeTab === 'shared_with_user' 
                     ? 'border-blue-600 text-blue-600' 
                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
@@ -772,7 +772,7 @@ export const AccessControlPage: React.FC = () => {
           </div>
 
           {/* Content - Scrollable */}
-          <div className="flex-1 overflow-y-auto bg-gray-50 p-4 sm:p-6">
+          <div className="flex-1 overflow-y-auto bg-gray-50 p-3 sm:p-4 md:p-6">
             {renderDetailContent()}
           </div>
         </aside>

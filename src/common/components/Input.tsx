@@ -80,6 +80,21 @@ function Input({
             marginTop: '2px',
             minHeight: '18px',
             fontSize: '0.75rem'
+          },
+          // Hide Edge/IE password reveal button
+          '& input[type="password"]::-ms-reveal': {
+            display: 'none'
+          },
+          '& input[type="password"]::-ms-clear': {
+            display: 'none'
+          },
+          // Hide Edge (Chromium) password reveal button
+          '& input[type="password"]::-webkit-credentials-auto-fill-button': {
+            display: 'none !important',
+            visibility: 'hidden',
+            pointerEvents: 'none',
+            position: 'absolute',
+            right: 0
           }
         }}
       />
