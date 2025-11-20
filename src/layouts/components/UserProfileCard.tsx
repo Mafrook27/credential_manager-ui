@@ -51,16 +51,7 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({ onClose }) => 
             </div>
           </div>
           
-          {/* Admin Password Display */}
-          {isAdmin && (
-            <div className="mt-3 pt-3 border-t border-gray-200">
-              <p className="text-xs text-gray-500 mb-1">Admin Access</p>
-              <div className="flex items-center gap-2 bg-white px-3 py-2 rounded border border-gray-200">
-                <span className="text-xs text-gray-600">Password:</span>
-                <span className="text-xs font-mono text-gray-900">Admin@123</span>
-              </div>
-            </div>
-          )}
+       
         </div>
 
         {/* Actions Section */}

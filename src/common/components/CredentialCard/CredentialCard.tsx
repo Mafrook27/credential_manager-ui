@@ -71,6 +71,7 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
   const [decryptedFields, setDecryptedFields] = useState<CredentialField[]>([]);
   const [isDecrypting, setIsDecrypting] = useState(false);
   const [isDecrypted, setIsDecrypted] = useState(false);
+  const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set()); // Track which fields are visible
 
   // Reset state when shouldResetState changes
   React.useEffect(() => {
@@ -100,7 +101,7 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
   // Use provided fields or convert legacy username/password to fields array format
   const displayFields: CredentialField[] = propFields || [
     { id: 'username', key: 'username', value: username || '' },
-    { id: 'password', key: 'password', value: '••••••••••••' }
+    { id: 'password', key: 'password', value: '••••••••••••••••' }
   ];
   
   const fieldsToShow = isExpanded ? displayFields : displayFields.slice(0, COLLAPSE_THRESHOLD);
@@ -276,7 +277,7 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
                 const decryptedField = decryptedFields.find(f => f.key === field.key);
                 const displayValue = areFieldsVisible && isDecrypted && decryptedField 
                   ? decryptedField.value 
-                  : field.value;
+                  : '••••••••••••••••';  // Show dots instead of encrypted value (16 dots)
                 
                 return (
                   <tr key={field.id}>
@@ -362,10 +363,10 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
             }}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-gray-200">
+            <div className="flex items-center justify-between mb-2 sm:mb-6 pb-2 sm:pb-4 border-b border-gray-200">
               <div className="min-w-0 flex-1">
                 <h2 className="text-base sm:text-lg font-bold text-gray-900 truncate">{serviceName}</h2>
-                <p className="text-xs text-gray-500 truncate">{credentialName || 'Credential Details'}</p>
+             
               </div>
               <button
                 onClick={() => setShowDetailsModal(false)}
@@ -389,47 +390,70 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
 
               {/* Credential Fields - Professional Typography */}
               <div>
-                <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wide mb-3">Credentials</h3>
+                <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wide mb-2">Credentials</h3>
                 <div className="space-y-3.5">
                   {displayFields.map(field => {
                     const decryptedField = decryptedFields.find(f => f.key === field.key);
-                    const displayValue = isDecrypted && decryptedField 
+                    const isFieldVisible = visibleFields.has(field.key);
+                    const displayValue = isFieldVisible && isDecrypted && decryptedField 
                       ? decryptedField.value 
-                      : (field.key.toLowerCase().includes('password') || field.key.toLowerCase().includes('secret') ? '•'.repeat(12) : field.value);
+                      : '••••••••••••••••';  // Show dots for all fields when not decrypted (16 dots)
+                    
+                    const toggleFieldVisibility = async () => {
+                      if (!isDecrypted && onDecrypt) {
+                        // Decrypt first if not already decrypted
+                        await handleDecrypt();
+                      }
+                      
+                      setVisibleFields(prev => {
+                        const newSet = new Set(prev);
+                        if (newSet.has(field.key)) {
+                          newSet.delete(field.key);
+                        } else {
+                          newSet.add(field.key);
+                        }
+                        return newSet;
+                      });
+                    };
                     
                     return (
                       <div key={field.id}>
                         <h4 className="text-sm font-medium text-gray-440 capitalize mb-2">{field.key}</h4>
-                        <div className="relative bg-gray-50 rounded-lg px-2 py-2 border border-gray-200 flex items-center justify-between gap-3">
-                          <p className={`text-sm  m-auto text-gray-900 break-all flex-1 ${field.key.toLowerCase().includes('password') ? 'font-mono' : ''}`}>
+                       <div className="flex gap-2 relative  gap-2 ">
+                        <div className="flex-1 relative bg-gray-50 rounded-lg px-2 py-2 border border-gray-200 flex items-center justify-between gap-2">
+                          <p className={`text-sm m-auto text-gray-900 break-all flex-1 ${field.key.toLowerCase().includes('password') ? 'font-mono' : ''}`}>
                             {displayValue}
                           </p>
-                          <button
-                            onClick={() => handleCopyField(field.key)}
-                            className="text-blue-600  bg-gray-50 hover:shadow-lg transition duration-300 ease-in-out transition-colors flex-shrink-0 p-0 "
-                            title="Copy"
-                          >
-                            <MdContentCopy size={14} />
-                          </button>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                        
+                            <button
+                              onClick={() => handleCopyField(field.key)}
+                              className="text-blue-600 hover:text-blue-800 transition-colors p-0"
+                              title="Copy"
+                            >
+                              <MdContentCopy size={14} />
+                            </button>
+                             
+                          </div>
+                          
                         </div>
+                           <button
+                              onClick={toggleFieldVisibility}
+                              className="text-gray-600 hover:text-gray-900 transition-colors p-0"
+                              title={isFieldVisible ? "Hide" : "Show"}
+                              disabled={isDecrypting}
+                            >
+                              {isFieldVisible ? <MdVisibilityOff size={16} /> : <MdVisibility size={16} />}
+                            </button>
+
+                         </div>   
                       </div>
                     );
                   })}
                 </div>
               </div>
 
-              {/* View/Hide Credentials Button */}
-              {onDecrypt && (
-                <div className="flex justify-end pt-1">
-                  <button
-                    onClick={handleDecrypt}
-                    className="px-2 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm"
-                  >
-                 
-                    {isDecrypting ? 'Credentials...':isDecrypted ? 'Hide Credentials' : 'View Credentials'}
-                  </button>
-                </div>
-              )}
+              {/* View Credentials button removed - use eye icons on each field instead */}
 
               {/* URL Field - Professional Display */}
               {url && (

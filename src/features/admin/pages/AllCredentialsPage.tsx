@@ -217,16 +217,8 @@ export const AllCredentialsPage: React.FC = () => {
       const response = await decryptCredential(id);
       const credential = response.data.credential || response.data.displaycred;
       
-      // Return fields array if available, otherwise return legacy format
-      if (credential?.fields && Array.isArray(credential.fields)) {
-        return { fields: credential.fields };
-      } else {
-        // Fallback to legacy structure
-        return { 
-          username: credential?.username || '', 
-          password: credential?.password || '' 
-        };
-      }
+      // Return fields array
+      return { fields: credential?.fields || [] };
     } catch (err) {
       if (shouldShowError(err)) {
         toast.error(getErrorMessage(err, 'Failed to decrypt'));
@@ -395,25 +387,14 @@ export const AllCredentialsPage: React.FC = () => {
                 
                   const credData = credential.credentialData || credential;
                   
-                  // Get fields array or convert legacy username/password to fields
-                  let fields;
-                  if (credData.fields && Array.isArray(credData.fields)) {
-                    // Map backend fields to display format with masked values
-                    fields = credData.fields.map((f, idx) => ({
-                      id: `field-${idx}`,
-                      key: f.key,
-                      value: f.key.toLowerCase().includes('password') || f.key.toLowerCase().includes('secret') 
-                        ? '••••••••••••' 
-                        : f.value
-                    }));
-                  } else {
-                    // Fallback to legacy structure
-                    const username = credData.username || credential.username || 'No username';
-                    fields = [
-                      { id: 'username', key: 'username', value: username },
-                      { id: 'password', key: 'password', value: '••••••••••••' }
-                    ];
-                  }
+                  // Get fields array
+                  const fields = credData.fields && Array.isArray(credData.fields)
+                    ? credData.fields.map((f, idx) => ({
+                        id: `field-${idx}`,
+                        key: f.key,
+                        value: '••••••••••••••••'  // Show dots for all fields (16 dots)
+                      }))
+                    : [];
                   
                   const url = credData.url || credential.url;
                   const notes = credData.notes || credential.notes;

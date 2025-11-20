@@ -296,16 +296,8 @@ export const UserCredentialPage: React.FC = () => {
       const response = await userCredentialApi.getCredentialDecrypted(id);
       const credential = response.data.credential as unknown as { fields?: any[]; username?: string; password?: string };
       
-      // Return fields array if available, otherwise return legacy format
-      if (credential?.fields && Array.isArray(credential.fields)) {
-        return { fields: credential.fields };
-      } else {
-        // Fallback to legacy structure
-        return { 
-          username: credential?.username || '', 
-          password: credential?.password || '' 
-        };
-      }
+      // Return fields array
+      return { fields: credential?.fields || [] };
     } catch (err: unknown) {
       if (shouldShowError(err)) {
         toast.error(getErrorMessage(err, 'Failed to decrypt'));
@@ -538,25 +530,14 @@ const handleOpenEditModal = useCallback((credential: ApiCredential) => {
              {filteredCredentials.map((cred) => {
   const credData = cred.credentialData || cred;
   
-  // Get fields array or convert legacy username/password to fields
-  let fields;
-  if (credData.fields && Array.isArray(credData.fields)) {
-    // Map backend fields to display format with masked values
-    fields = credData.fields.map((f: any, idx: number) => ({
-      id: `field-${idx}`,
-      key: f.key,
-      value: f.key.toLowerCase().includes('password') || f.key.toLowerCase().includes('secret') 
-        ? '••••••••••••' 
-        : f.value
-    }));
-  } else {
-    // Fallback to legacy structure
-    const username = credData.username || cred.username || 'No username';
-    fields = [
-      { id: 'username', key: 'username', value: username },
-      { id: 'password', key: 'password', value: '••••••••••••' }
-    ];
-  }
+  // Get fields array
+  const fields = credData.fields && Array.isArray(credData.fields)
+    ? credData.fields.map((f: any, idx: number) => ({
+        id: `field-${idx}`,
+        key: f.key,
+        value: '••••••••••••••••'  // Show dots for all fields (16 dots)
+      }))
+    : [];
   
   const url = credData.url || cred.url;
   const notes = credData.notes || cred.notes;

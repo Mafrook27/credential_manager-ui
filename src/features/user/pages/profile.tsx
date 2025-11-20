@@ -16,7 +16,7 @@ import { EditProfileModal } from '../Components/EditProfileModal';
 import { ConfirmModal } from '../../../common/modals/ConfirmModal';
 
 export const Profile: React.FC = () => {
-  const { user: authUser, isAuthenticated } = useAuth();
+  const { user: authUser, isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
 
@@ -39,35 +39,37 @@ export const Profile: React.FC = () => {
     }
   };
 
-  // Button configuration
+  // Button configuration - Hide Change Password, Edit Profile, and Delete Account for admins
   const actionButtons = [
-    {
-      id: 'password',
-      icon: MdLock,
-      label: 'Change Password',
-      onClick: () => setShowPasswordModal(true),
-      variant: 'default'
-    },
-    {
-      id: 'edit',
-      icon: MdEdit,
-      label: 'Edit Profile',
-      onClick: () => setShowEditModal(true),
-      variant: 'default'
-    },
-    {
-      id: 'delete',
-      icon: MdDelete,
-      label: 'Delete Account',
-      onClick: () => setShowDeleteModal(true),
-      variant: 'danger'
-    },
+    ...(!isAdmin ? [
+      {
+        id: 'password',
+        icon: MdLock,
+        label: 'Change Password',
+        onClick: () => setShowPasswordModal(true),
+        variant: 'default' as const
+      },
+      {
+        id: 'edit',
+        icon: MdEdit,
+        label: 'Edit Profile',
+        onClick: () => setShowEditModal(true),
+        variant: 'default' as const
+      },
+      {
+        id: 'delete',
+        icon: MdDelete,
+        label: 'Delete Account',
+        onClick: () => setShowDeleteModal(true),
+        variant: 'danger' as const
+      }
+    ] : []),
     {
       id: 'logout',
       icon: MdLogout,
       label: 'Logout',
       onClick: handleLogout,
-      variant: 'default'
+      variant: 'default' as const
     }
   ];
 

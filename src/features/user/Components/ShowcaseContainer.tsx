@@ -204,19 +204,11 @@ export const ShowcaseContainer: React.FC<ShowcaseContainerProps> = ({
           const type = credential.rootInstance?.type || credential.type || 'other';
           const initials = getInitials(serviceName);
           
-          // Get fields - support both new fields array and legacy username/password
-          let fields: Array<{ key: string; value: string }> = [];
-          if (credData.fields && Array.isArray(credData.fields)) {
-            fields = credData.fields;
-          } else if (credential.fields && Array.isArray(credential.fields)) {
-            fields = credential.fields;
-          } else {
-            // Fallback to legacy structure
-            const username = credData.username || credential.username;
-            if (username) {
-              fields.push({ key: 'username', value: username });
-            }
-          }
+          // Get fields array
+          const fields: Array<{ key: string; value: string }> = 
+            (credData.fields && Array.isArray(credData.fields)) ? credData.fields :
+            (credential.fields && Array.isArray(credential.fields)) ? credential.fields :
+            [];
           
           // Show first 2 fields only
           const displayFields = fields.slice(0, 2);
@@ -279,8 +271,8 @@ export const ShowcaseContainer: React.FC<ShowcaseContainerProps> = ({
                     <div key={index} className="mb-2">
                       <div className="d-flex align-items-center gap-2">
                         <span className="text-muted text-capitalize" style={{ fontSize: '0.75rem' }}>{field.key}:</span>
-                        <span className="text-truncate fw-medium" style={{ fontSize: '0.85rem', fontFamily: field.key.toLowerCase().includes('password') ? 'monospace' : 'inherit' }}>
-                          {field.key.toLowerCase().includes('password') || field.key.toLowerCase().includes('secret') ? '••••••••••••' : field.value}
+                        <span className="text-truncate fw-medium" style={{ fontSize: '0.85rem', fontFamily: 'monospace' }}>
+                          ••••••••••••••••
                         </span>
                       </div>
                     </div>
