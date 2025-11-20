@@ -42,6 +42,7 @@ const AdminDashboard: React.FC = () => {
   const [approvalLoading, setApprovalLoading] = useState(false);
   const [approvingUserId, setApprovingUserId] = useState<string | null>(null);
   const [searchError, setSearchError] = useState<string>('');
+  const [rejectedUsers, setRejectedUsers] = useState<Set<string>>(new Set()); // Track rejected users in this session
 
   // ======================
   //   FETCH STATS (Only once on mount)
@@ -95,6 +96,15 @@ const AdminDashboard: React.FC = () => {
         }));
       setPendingUsers(unverifiedUsers);
       setSearchResults(unverifiedUsers);
+      
+      // Build rejected users set from backend data
+      const rejected = new Set<string>();
+      response.data.users.forEach((user: any) => {
+        if (user.rejectedAt && !user.isVerified) {
+          rejected.add(user._id);
+        }
+      });
+      setRejectedUsers(rejected);
     } catch (err) {
       // console.error('Failed to load pending users:', err);
       setSearchError('Failed to load pending users. Please try again.');
@@ -150,24 +160,50 @@ const AdminDashboard: React.FC = () => {
   };
 
   // ======================
-  //   REJECT USER (Just remove from pending list, don't delete)
+  //   REJECT USER (Call backend API)
   // ======================
   const handleRejectUser = async (userId: string) => {
-    if (!window.confirm('Are you sure you want to reject this user? They will be removed from the pending list.')) {
-      return;
-    }
-    
     try {
       setApprovingUserId(userId);
       setSearchError('');
       
-      // Just remove from pending list (no API call, no deletion)
-      setPendingUsers(prev => prev.filter(u => u.id !== userId));
-      setSearchResults(prev => prev.filter(u => u.id !== userId));
+      // Call backend API to mark as rejected
+      const response = await adminApi.rejectUser(userId);
       
-      toast.success('User rejected and removed from pending list');
+      // Add to rejected set
+      setRejectedUsers(prev => new Set(prev).add(userId));
+      
+      toast.success(response.message || 'User rejected. Click "Undo" to restore.');
     } catch (err) {
-      setSearchError('Failed to reject user. Please try again.');
+      const error = err as AxiosError<{ message?: string }>;
+      setSearchError(error?.response?.data?.message || 'Failed to reject user. Please try again.');
+    } finally {
+      setApprovingUserId(null);
+    }
+  };
+
+  // ======================
+  //   UNDO REJECTION (Call backend API)
+  // ======================
+  const handleUndoRejection = async (userId: string) => {
+    try {
+      setApprovingUserId(userId);
+      setSearchError('');
+      
+      // Call backend API to undo rejection
+      const response = await adminApi.undoRejection(userId);
+      
+      // Remove from rejected set
+      setRejectedUsers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
+      
+      toast.success(response.message || 'Rejection undone');
+    } catch (err) {
+      const error = err as AxiosError<{ message?: string }>;
+      setSearchError(error?.response?.data?.message || 'Failed to undo rejection. Please try again.');
     } finally {
       setApprovingUserId(null);
     }
@@ -179,7 +215,7 @@ const AdminDashboard: React.FC = () => {
   const handleOpenApprovalModal = () => {
     setShowApprovalModal(true);
     setSearchError(''); // Clear any previous search errors
-    fetchPendingUsers();
+    fetchPendingUsers(); // This will also load rejected users from backend
   };
 
   // ======================
@@ -396,7 +432,7 @@ const AdminDashboard: React.FC = () => {
               label="Verify users" 
               icon={<MdBarChart />} 
               onClick={handleOpenApprovalModal} 
-              badge={stats?.unverifiedUsers} 
+              badge={stats?.unverifiedUsers > 0 ? stats.unverifiedUsers : undefined} 
               iconBgColor="#d1fae5" 
               iconColor="#16a34a"
             />
@@ -453,10 +489,12 @@ const AdminDashboard: React.FC = () => {
               ...user,
               status: 'pending' as const
             }))}
+            rejectedUsers={rejectedUsers}
             searchPlaceholder="Search users by name or email..."
             onSearch={handleUserSearch}
             onApprove={handleApproveUser}
             onReject={handleRejectUser}
+            onUndo={handleUndoRejection}
             onClose={() => setShowApprovalModal(false)}
             emptyStateMessage="No pending users to approve"
             isLoading={approvalLoading}

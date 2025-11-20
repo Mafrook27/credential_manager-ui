@@ -41,14 +41,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, activePath, onNavigate, o
     <aside className={`h-full bg-white flex flex-col transition-all duration-300 ease-in-out ${isExpanded ? 'w-64' : 'w-[72px]'}`}>
       {/* Header */}
       <div className={`flex items-center h-16 px-4 shrink-0 ${isExpanded ? 'justify-between' : 'justify-center'}`}>
-        {isExpanded && (
+        {/* {isExpanded && (
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <MdAdminPanelSettings className="w-6 h-6 text-red-500 shrink-0" />
             <span className="font-bold text-lg text-gray-800 truncate">
               {isAdmin ? 'Admin Panel' : 'User Panel'}
             </span>
           </div>
-        )}
+        )} */}
         <button 
           onClick={onClose}
           className="p-2 rounded-full hover:bg-gray-100 md:hidden shrink-0"

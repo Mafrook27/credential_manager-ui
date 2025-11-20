@@ -5,7 +5,7 @@ export interface User {
   role?: string;
   isVerified?: boolean;
   isActive?: boolean;
-  lastLogin?: Date;
+  lastLogin?: string; // ISO date string from backend
 }
 
 export interface AuthState {

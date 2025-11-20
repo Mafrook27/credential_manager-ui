@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { MdDelete, MdVisibility, MdContentCopy, MdEdit, MdShare, MdMoreVert, MdVisibilityOff, MdKey, MdPerson } from 'react-icons/md';
 import { ActionCard } from '../ActionCard';
 import type { User } from '../../../features/admin/types/user.types';
+import { toast } from 'react-toastify';
 
 export interface CredentialField {
   id: string;
@@ -107,7 +108,10 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
-    // You can add toast notification here
+    toast.success('Copied to clipboard!', {
+      position: 'top-right',
+      autoClose: 2000,
+    });
   };
 
   // Decrypt credentials by calling API
@@ -141,11 +145,49 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
       }
       
       setIsDecrypted(true);
+      return decrypted;
     } catch (error) {
       console.error('Failed to decrypt credentials:', error);
       // You can add error toast notification here
+      throw error;
     } finally {
       setIsDecrypting(false);
+    }
+  };
+
+  // Copy field value - decrypt first if needed
+  const handleCopyField = async (fieldKey: string) => {
+    try {
+      // If already decrypted, just copy
+      if (isDecrypted) {
+        const field = decryptedFields.find(f => f.key === fieldKey);
+        if (field) {
+          handleCopy(field.value);
+        }
+        return;
+      }
+
+      // Need to decrypt first
+      if (!onDecrypt) return;
+
+      const decrypted = await onDecrypt(id);
+      
+      // Find the field value from decrypted data
+      let valueToCopy = '';
+      if (decrypted.fields) {
+        const field = decrypted.fields.find(f => f.key === fieldKey);
+        valueToCopy = field?.value || '';
+      } else if (fieldKey === 'username' && decrypted.username) {
+        valueToCopy = decrypted.username;
+      } else if (fieldKey === 'password' && decrypted.password) {
+        valueToCopy = decrypted.password;
+      }
+
+      if (valueToCopy) {
+        handleCopy(valueToCopy);
+      }
+    } catch (error) {
+      console.error('Failed to copy field:', error);
     }
   };
 
@@ -154,17 +196,18 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
       {/* Card - Professional Design */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md flex flex-col border border-gray-200">
         {/* Header */}
-        <header className="px-3 py-2.5 bg-white border-b border-gray-200 flex items-start justify-between gap-2">
+        <header className="mt-1 px-3 py-3 bg-white border-b border-gray-200 flex items-start justify-between gap-2">
           <div className="flex items-start gap-2.5 min-w-0 flex-1">
             <div className="w-9 h-9 rounded-lg bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
               <MdKey className="w-4 h-4 text-white" />
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="text-sm font-bold text-gray-900 truncate leading-tight" title={serviceName}>{serviceName}</h3>
-              <div className="flex items-center gap-3 mt-1 mb-3">
+              <h3 className="text-sm m-auto font-bold text-gray-900 truncate leading-tight" title={serviceName}>{serviceName}</h3>
+              <div className="flex items-center gap-2 mt-1 mb-3">
                 {credentialName && (
                   <p className="text-xs mb-3 text-gray-500 truncate" title={credentialName}>{credentialName}</p>
                 )}
+
                 {sharedWith && sharedWith.length > 0 && (
                   <div className="flex mb-3 items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full flex-shrink-0" title={`Shared with ${sharedWith.length} user(s)`}>
                     <MdPerson className="w-3 h-3" />
@@ -174,6 +217,8 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
               </div>
             </div>
           </div>
+
+
           {/* Only show menu if there are actions available */}
           {(onEdit || onShare || onDelete) && (
             <div className="relative flex-shrink-0 credential-card-menu">
@@ -267,10 +312,7 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
                           {areFieldsVisible ? <MdVisibilityOff className="w-3.5 h-3.5"/> : <MdVisibility className="w-3.5 h-3.5"/>}
                         </button>
                         <button 
-                          onClick={() => {
-                            const valueToCopy = decryptedField?.value || field.value;
-                            handleCopy(valueToCopy);
-                          }} 
+                          onClick={() => handleCopyField(field.key)}
                           className="p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded"
                           title="Copy"
                         >
@@ -334,106 +376,120 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
             </div>
 
             {/* Modal Content */}
-            <div className="space-y-3 sm:space-y-4">
+            <div className="space-y-4">
+              {/* Sub Instance Name - Professional Gray Box */}
               {credentialName && (
                 <div>
-                  <p className="text-xs text-gray-500 font-medium mb-1.5">Sub Instance Name</p>
-                  <p className="text-sm text-gray-900 font-medium bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">{credentialName}</p>
+                  <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wide mb-2">Sub Instance Name</h3>
+                  <div className="bg-gray-50 px-2 py-2 rounded-lg border border-gray-200">
+                    <p className="text-sm text-gray-600 font-medium m-auto">{credentialName}</p>
+                  </div>
                 </div>
               )}
 
-              {/* Decrypt Button - Calls API */}
+              {/* Credential Fields - Professional Typography */}
+              <div>
+                <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wide mb-3">Credentials</h3>
+                <div className="space-y-3.5">
+                  {displayFields.map(field => {
+                    const decryptedField = decryptedFields.find(f => f.key === field.key);
+                    const displayValue = isDecrypted && decryptedField 
+                      ? decryptedField.value 
+                      : (field.key.toLowerCase().includes('password') || field.key.toLowerCase().includes('secret') ? '•'.repeat(12) : field.value);
+                    
+                    return (
+                      <div key={field.id}>
+                        <h4 className="text-sm font-medium text-gray-440 capitalize mb-2">{field.key}</h4>
+                        <div className="relative bg-gray-50 rounded-lg px-2 py-2 border border-gray-200 flex items-center justify-between gap-3">
+                          <p className={`text-sm  m-auto text-gray-900 break-all flex-1 ${field.key.toLowerCase().includes('password') ? 'font-mono' : ''}`}>
+                            {displayValue}
+                          </p>
+                          <button
+                            onClick={() => handleCopyField(field.key)}
+                            className="text-blue-600  bg-gray-50 hover:shadow-lg transition duration-300 ease-in-out transition-colors flex-shrink-0 p-0 "
+                            title="Copy"
+                          >
+                            <MdContentCopy size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* View/Hide Credentials Button */}
               {onDecrypt && (
-                <div className="flex justify-end">
+                <div className="flex justify-end pt-1">
                   <button
                     onClick={handleDecrypt}
-                    disabled={isDecrypting}
-                    className="px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-2 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm"
                   >
-                    {isDecrypting ? 'Decrypting...' : isDecrypted ? 'Hide' : 'Decrypt'}
+                 
+                    {isDecrypting ? 'Credentials...':isDecrypted ? 'Hide Credentials' : 'View Credentials'}
                   </button>
                 </div>
               )}
 
-              {/* Dynamic Fields Display */}
-              {displayFields.map(field => {
-                const decryptedField = decryptedFields.find(f => f.key === field.key);
-                const displayValue = isDecrypted && decryptedField 
-                  ? decryptedField.value 
-                  : (field.key === 'password' ? '•'.repeat(12) : field.value);
-                
-                return (
-                  <div key={field.id}>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <p className="text-xs text-gray-500 font-medium capitalize">{field.key}</p>
-                      {isDecrypted && decryptedField && (
-                        <button
-                          onClick={() => handleCopy(decryptedField.value)}
-                          className="text-blue-600 text-xs font-medium hover:text-blue-700 transition-colors flex items-center gap-1"
-                        >
-                          <MdContentCopy size={14} />
-                          <span>Copy</span>
-                        </button>
-                      )}
-                    </div>
-                    <div className="bg-gray-50 rounded-lg px-3 py-2.5 border border-gray-100">
-                      <p className={`text-sm text-gray-900 break-all ${field.key === 'password' ? 'font-mono' : 'font-medium'}`}>
-                        {displayValue}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Notes Section - Above URL */}
-              {notes && (
-                <div>
-                  <p className="text-xs text-gray-500 font-medium mb-1.5">Notes</p>
-                  <div className="bg-gray-50 rounded-lg px-3 py-2.5 border border-gray-100">
-                    <p className="text-sm text-gray-900 break-words whitespace-pre-wrap">{notes}</p>
-                  </div>
-                </div>
-              )}
-
+              {/* URL Field - Professional Display */}
               {url && (
                 <div>
-                  <p className="text-xs text-gray-500 font-medium mb-1.5">URL</p>
-                  <a
-                    href={url.startsWith('http') ? url : `https://${url}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-600 hover:text-blue-700 break-all bg-blue-50 px-3 py-2 rounded-lg border border-blue-100 block"
-                  >
-                    {url}
-                  </a>
+                  <h3 className="text-sm font-medium text-gray-900 mb-2">URL</h3>
+                  <div className="bg-gray-50 rounded-lg px-2 py-2 border border-gray-200">
+                    <a
+                      href={url.startsWith('http') ? url : `https://${url}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm  m-auto text-blue-400 hover:text-blue-500 break-all hover:underline"
+                    >
+                      {url}
+                    </a>
+                  </div>
                 </div>
               )}
-
-              {/* Shared With Section */}
+     {/* Notes */}
+              {notes && (
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wide mb-2">Notes</h3>
+                  <div className="bg-gray-50 rounded-lg px-4 py-3 border border-gray-200">
+                    <p className="text-sm m-auto text-gray-900 break-words whitespace-pre-wrap">{notes}</p>
+                  </div>
+                </div>
+              )}
+              {/* Shared With Section - Improved Spacing & Revoke Button */}
               {sharedWith && sharedWith.length > 0 && (
                 <div>
-                  <p className="text-xs sm:text-sm text-gray-500 font-semibold mb-2">Shared With ({sharedWith.length})</p>
-                  <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wide mb-2">Shared With ({sharedWith.length})</h3>
+                  <div className="space-y-2.5">
                     {sharedWith.map((user) => (
-                      <div key={user._id} className="flex items-center gap-2 sm:gap-3 bg-gray-50 rounded-lg px-2.5 sm:px-3 py-2 sm:py-2.5 border border-gray-200">
+                      <div key={user._id} className="flex items-center justify-between gap-3 bg-gray-50 rounded-lg px-2 py-2 border border-gray-200">
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{user.name}</p>
-                          <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                          <p className="text-sm  m-auto font-semibold text-gray-900 truncate">{user.name}</p>
+                          <p className="text-xs  m-auto text-gray-500 truncate mt-1">{user.email}</p>
                         </div>
+                        {onRevoke && (
+                          <button
+                            onClick={() => onRevoke(id, user._id)}
+                            className="px-3 py-1.5 text-xs font-medium text-red-700 bg-white border border-red-200 hover:bg-red-50 rounded-md transition-colors flex-shrink-0"
+                          >
+                            Revoke
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
+         
+
+              {/* Created By - Improved Spacing */}
               {createdBy && (
                 <div>
-                  <p className="text-xs sm:text-sm text-gray-500 font-semibold mb-2">Created By</p>
-                  <div className="flex items-center gap-2 sm:gap-3 bg-gray-50 rounded-lg px-2.5 sm:px-3 py-2 sm:py-2.5 border border-gray-200">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{createdBy.name}</p>
-                      <p className="text-xs text-gray-500 truncate">{createdBy.email}</p>
-                    </div>
+                  <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wide mb-2">Created By</h3>
+                  <div className="bg-gray-50 rounded-lg px-2 py-2 border border-gray-200">
+                    <p className="text-sm m-auto font-semibold text-gray-900">{createdBy.name}</p>
+                    <p className="text-xs m-auto text-gray-500 mt-1">{createdBy.email}</p>
                   </div>
                 </div>
               )}
@@ -511,7 +567,7 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
                 onRevoke?.(id, userId);
               }}
               onClose={() => setShowShareModal(false)}
-              emptyStateMessage="No users available to share with"
+              emptyStateMessage="This credential is not currently shared yet"
               isLoading={isLoadingUsers}
             />
           </div> 

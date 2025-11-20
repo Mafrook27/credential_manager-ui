@@ -39,21 +39,19 @@ export const UserDashboard: React.FC = () => {
     setStatsLoading(true);
     setStatsError(false);
     try {
-      const [statsResponse, profileResponse] = await Promise.all([
-        userApi.getUserStats(user.id),
-        userApi.getProfile(user.id),
-      ]);
+      // Only fetch stats, use lastLogin from Redux (which has previous login time from login response)
+      const statsResponse = await userApi.getUserStats(user.id);
 
       console.log('✅ Stats response:', statsResponse);
-      console.log('✅ Profile response:', profileResponse);
       console.log('✅ Stats data:', statsResponse.data);
       console.log('✅ Stats stats:', statsResponse.data?.stats);
+      console.log('✅ User lastLogin from Redux:', user.lastLogin);
 
       const newStats = {
         totalCredentials: statsResponse.data.stats.totalCredentials,
         sharedWithMe: statsResponse.data.stats.sharedWithMe,
         recentActivities: statsResponse.data.stats.recentActivities,
-        lastLogin: profileResponse.lastLogin,
+        lastLogin: user.lastLogin, // ✅ Use lastLogin from Redux (contains previous login time)
       };
       
       console.log('✅ Setting stats to:', newStats);

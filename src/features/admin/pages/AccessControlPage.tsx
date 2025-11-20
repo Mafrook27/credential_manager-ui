@@ -726,50 +726,52 @@ export const AccessControlPage: React.FC = () => {
             </button>
           </div>
 
-          {/* Tabs - No Scroll */}
-          <div className="border-b border-gray-200 bg-white flex-shrink-0 overflow-x-auto">
-            <nav aria-label="Tabs" className="flex min-w-max sm:min-w-0">
-              <button 
-                onClick={() => setActiveTab('overview')} 
-                className={`flex-1 border-b-2 py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
-                  activeTab === 'overview' 
-                    ? 'border-blue-600 text-blue-600' 
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                }`}
-              >
-                Overview
-              </button>
-              <button 
-                onClick={() => setActiveTab('instances')} 
-                className={`flex-1 border-b-2 py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
-                  activeTab === 'instances' 
-                    ? 'border-blue-600 text-blue-600' 
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                }`}
-              >
-                Instances
-              </button>
-              <button 
-                onClick={() => setActiveTab('owned_credentials')} 
-                className={`flex-1 border-b-2 py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
-                  activeTab === 'owned_credentials' 
-                    ? 'border-blue-600 text-blue-600' 
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                }`}
-              >
-                Owned
-              </button>
-              <button 
-                onClick={() => setActiveTab('shared_with_user')} 
-                className={`flex-1 border-b-2 py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
-                  activeTab === 'shared_with_user' 
-                    ? 'border-blue-600 text-blue-600' 
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                }`}
-              >
-                Shared
-              </button>
-            </nav>
+          {/* Tabs - Mobile Optimized */}
+          <div className="bg-white flex-shrink-0">
+            <div className="px-2 sm:px-3 py-2">
+              <nav aria-label="Tabs" className="flex gap-1 sm:gap-2 p-1 bg-gray-100 rounded-lg">
+                <a 
+                  onClick={() => setActiveTab('overview')} 
+                  className={`flex-1 py-1.5 sm:py-2.5 px-2 sm:px-4 text-[11px] sm:text-sm font-medium transition-all duration-300 whitespace-nowrap rounded-md cursor-pointer text-center ${
+                    activeTab === 'overview' 
+                      ? 'bg-white text-gray-900 shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Overview
+                </a>
+                <a
+                  onClick={() => setActiveTab('instances')} 
+                  className={`flex-1 py-1.5 sm:py-2.5 px-2 sm:px-4 text-[11px] sm:text-sm font-medium transition-all duration-300 whitespace-nowrap rounded-md cursor-pointer text-center ${
+                    activeTab === 'instances' 
+                      ? 'bg-white text-gray-900 shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Instances
+                </a>
+                <a
+                  onClick={() => setActiveTab('owned_credentials')} 
+                  className={`flex-1 py-1.5 sm:py-2.5 px-2 sm:px-4 text-[11px] sm:text-sm font-medium transition-all duration-300 whitespace-nowrap rounded-md cursor-pointer text-center ${
+                    activeTab === 'owned_credentials' 
+                      ? 'bg-white text-gray-900 shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Owned
+                </a>
+                <a
+                  onClick={() => setActiveTab('shared_with_user')} 
+                  className={`flex-1 py-1.5 sm:py-2.5 px-2 sm:px-4 text-[11px] sm:text-sm font-medium transition-all duration-300 whitespace-nowrap rounded-md cursor-pointer text-center ${
+                    activeTab === 'shared_with_user' 
+                      ? 'bg-white text-gray-900 shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Shared
+                </a>
+              </nav>
+            </div>
           </div>
 
           {/* Content - Scrollable */}

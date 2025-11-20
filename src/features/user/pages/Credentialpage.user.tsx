@@ -597,16 +597,60 @@ const handleOpenEditModal = useCallback((credential: ApiCredential) => {
               </div>
             ) : (
               <div className="text-center py-16 bg-white border border-gray-200 rounded-lg">
+                {/* Icon */}
+                <div className="mb-4">
+                  {searchQuery || selectedRootInstance || selectedSubInstance || ownershipFilter !== 'all' ? (
+                    <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  ) : (
+                    <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  )}
+                </div>
+
+                {/* Message */}
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   {searchQuery || selectedRootInstance || selectedSubInstance || ownershipFilter !== 'all'
                     ? 'No Results Found'
                     : 'No Credentials Yet'}
                 </h3>
-                <p className="text-gray-600 text-sm sm:text-base">
-                  {searchQuery || selectedRootInstance || selectedSubInstance || ownershipFilter !== 'all'
-                    ? 'No credentials found matching your filters'
-                    : 'Get started by creating your first credential'}
+                <p className="text-gray-600 text-sm sm:text-base mb-4">
+                  {searchQuery || selectedRootInstance || selectedSubInstance || ownershipFilter !== 'all' ? (
+                    <>
+                      No credentials found matching your filters
+                      <br />
+                      <span className="text-xs text-gray-500 mt-1 inline-block">Try adjusting your search or filters</span>
+                    </>
+                  ) : (
+                    'Get started by creating your first credential'
+                  )}
                 </p>
+
+                {/* Action Buttons */}
+                {searchQuery || selectedRootInstance || selectedSubInstance || ownershipFilter !== 'all' ? (
+                  <div className="flex gap-2 justify-center">
+                    <button 
+                      onClick={() => {
+                        setSearchQuery('');
+                        setSelectedRootInstance(null);
+                        setSelectedSubInstance(null);
+                        setOwnershipFilter('all');
+                      }}
+                      className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={handleOpenCreateModal}
+                    className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium shadow-sm transition-colors"
+                  >
+                    + Create Credential
+                  </button>
+                )}
               </div>
             )}
 

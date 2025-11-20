@@ -8,12 +8,14 @@ interface ActionCardProps {
   mode: 'share' | 'approve';
   users: User[];
   sharedUsers?: User[];
+  rejectedUsers?: Set<string>; // Track rejected users in this session
   searchPlaceholder?: string;
   onSearch?: (query: string) => void;
   onShare?: (userId: string | string[]) => void;  // Support both single and multiple
   onRevoke?: (userId: string) => void;
   onApprove?: (userId: string) => void;
   onReject?: (userId: string) => void;
+  onUndo?: (userId: string) => void; // Undo rejection
   onClose?: () => void;
   emptyStateMessage?: string;
   isLoading?: boolean;
@@ -26,12 +28,14 @@ export const ActionCard: React.FC<ActionCardProps> = ({
   mode,
   users,
   sharedUsers = [],
+  rejectedUsers = new Set(),
   searchPlaceholder = 'Search users by name or email',
   onSearch,
   onShare,
   onRevoke,
   onApprove,
   onReject,
+  onUndo,
   onClose,
   emptyStateMessage,
   isLoading = false,
@@ -120,41 +124,62 @@ export const ActionCard: React.FC<ActionCardProps> = ({
   const displayedSharedUsers = sharedUsers.filter(user => searchQuery === '' || user.name.toLowerCase().includes(searchQuery.toLowerCase()) || user.email.toLowerCase().includes(searchQuery.toLowerCase()));
   const displayedApproveUsers = users.filter(user => searchQuery === '' || user.name.toLowerCase().includes(searchQuery.toLowerCase()) || user.email.toLowerCase().includes(searchQuery.toLowerCase()));
 
-  const renderUser = (user: User, isApproveMode: boolean = false) => (
-    <div key={user.id} className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 sm:py-3.5 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0">
-      <div className="flex items-center gap-3 flex-1 min-w-0">
-        <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-          <span className="text-primary font-semibold text-sm sm:text-base">{user.name.charAt(0).toUpperCase()}</span>
+  const renderUser = (user: User, isApproveMode: boolean = false) => {
+    const isRejected = rejectedUsers.has(user.id);
+    
+    return (
+      <div key={user.id} className={`flex items-center justify-between gap-3 px-4 sm:px-5 py-3 sm:py-3.5 transition-colors border-b border-gray-100 last:border-b-0 ${isRejected ? 'bg-red-50/50' : 'hover:bg-gray-50'}`}>
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className={`h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center shrink-0 ${isRejected ? 'bg-red-100' : 'bg-primary/10'}`}>
+            <span className={`font-semibold text-sm sm:text-base ${isRejected ? 'text-red-600' : 'text-primary'}`}>{user.name.charAt(0).toUpperCase()}</span>
+          </div>
+          <div className="flex-1 min-w-0 flex flex-col justify-center">
+            <p className={`text-sm mb-0 sm:text-base font-medium truncate leading-snug ${isRejected ? 'text-gray-500' : 'text-gray-900'}`}>{user.name}</p>
+            <p className="text-gray-500 text-xs sm:text-sm break-words overflow-hidden leading-snug mt-0.5" style={{ wordBreak: 'break-word', maxHeight: '2.5em' }}>{user.email}</p>
+          </div>
         </div>
-        <div className="flex-1 min-w-0 flex flex-col justify-center">
-          <p className="text-gray-900 text-sm  mb-0 sm:text-base font-medium truncate leading-snug">{user.name}</p>
-          <p className="text-gray-500 text-xs sm:text-sm break-words overflow-hidden leading-snug mt-0.5" style={{ wordBreak: 'break-word', maxHeight: '2.5em' }}>{user.email}</p>
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Only show status badge if NOT in approve mode (since all users are pending) */}
+          {!isApproveMode && user.status && getStatusBadge(user.status)}
+          {isApproveMode && user.status === 'pending' && (
+            <>
+              {isRejected ? (
+                <>
+                  <span className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg bg-red-100 text-red-700 whitespace-nowrap">
+                    Rejected
+                  </span>
+                  <button
+                    onClick={() => onUndo?.(user.id)}
+                    disabled={loadingUserId === user.id}
+                    className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg border border-blue-300 hover:bg-blue-50 text-blue-600 disabled:opacity-50 transition-all shadow-sm whitespace-nowrap"
+                  >
+                    {loadingUserId === user.id ? 'Loading...' : 'Undo'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => onReject?.(user.id)}
+                    disabled={loadingUserId === user.id}
+                    className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-100 text-gray-700 disabled:opacity-50 transition-all whitespace-nowrap"
+                  >
+                    Reject
+                  </button>
+                  <button
+                    onClick={() => onApprove?.(user.id)}
+                    disabled={loadingUserId === user.id}
+                    className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-50 transition-all shadow-sm whitespace-nowrap"
+                  >
+                    {loadingUserId === user.id ? 'Loading...' : 'Approve'}
+                  </button>
+                </>
+              )}
+            </>
+          )}
         </div>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
-        {/* Only show status badge if NOT in approve mode (since all users are pending) */}
-        {!isApproveMode && user.status && getStatusBadge(user.status)}
-        {isApproveMode && user.status === 'pending' && (
-          <>
-            <button
-              onClick={() => onReject?.(user.id)}
-              disabled={loadingUserId === user.id}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-100 text-gray-700 disabled:opacity-50 transition-all whitespace-nowrap"
-            >
-              Reject
-            </button>
-            <button
-              onClick={() => onApprove?.(user.id)}
-              disabled={loadingUserId === user.id}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-50 transition-all shadow-sm whitespace-nowrap"
-            >
-              {loadingUserId === user.id ? 'Loading...' : 'Approve'}
-            </button>
-          </>
-        )}
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderContent = () => {
     if (mode === 'approve') {
@@ -197,7 +222,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
         ) : (
           <div className="flex flex-col items-center justify-center py-8 sm:py-10 md:py-12 px-4">
             <IoPerson className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-gray-300 mb-3" />
-            <p className="text-sm sm:text-base text-gray-500">{emptyStateMessage || 'Not shared with anyone yet'}</p>
+            <p className="text-sm sm:text-base text-gray-500">This credential is not currently shared yet</p>
           </div>
         );
       } else {
@@ -239,7 +264,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
         ) : (
           <div className="flex flex-col items-center justify-center py-8 sm:py-10 md:py-12 px-4">
             <IoPerson className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-gray-300 mb-3" />
-            <p className="text-sm sm:text-base text-gray-500">{emptyStateMessage || 'No users available to share with'}</p>
+            <p className="text-sm sm:text-base text-gray-500">No users available to share</p>
           </div>
         );
       }

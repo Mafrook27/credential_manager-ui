@@ -687,14 +687,16 @@ export const InstanceManagementModal: React.FC<InstanceManagementModalProps> = (
               >
                 <IoCreateOutline className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
-              <button 
-                onClick={() => handleDeleteService(selectedInstance)}
-                disabled={actionLoading}
-                className="p-1.5 sm:p-2 rounded-lg text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50" 
-                title="Delete service"
-              >
-                <IoTrashOutline className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
+              {(!selectedInstance.subInstances || selectedInstance.subInstances.length === 0) && (
+                <button 
+                  onClick={() => handleDeleteService(selectedInstance)}
+                  disabled={actionLoading}
+                  className="p-1.5 sm:p-2 rounded-lg text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50" 
+                  title="Delete service"
+                >
+                  <IoTrashOutline className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+              )}
             </div>
           </div>
           

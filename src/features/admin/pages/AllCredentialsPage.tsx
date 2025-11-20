@@ -521,7 +521,7 @@ export const AllCredentialsPage: React.FC = () => {
                       </select>
                     </div>
                     <span className="text-xs text-gray-700 font-medium">
-                      {(currentPage - 1) * limit + 1}–{Math.min(currentPage * limit, totalItems)} of {totalItems}
+                      {credentials.length > 0 ? (currentPage - 1) * limit + 1 : 0}–{(currentPage - 1) * limit + credentials.length} of {totalItems}
                     </span>
                   </div>
                   
@@ -567,6 +567,8 @@ export const AllCredentialsPage: React.FC = () => {
                       onChange={(e) => handleLimitChange(Number(e.target.value))}
                       className="border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                     >
+                      
+                   
                       <option value={5}>5</option>
                       <option value={10}>10</option>
                       <option value={20}>20</option>
@@ -577,7 +579,7 @@ export const AllCredentialsPage: React.FC = () => {
                   {/* Page info and navigation */}
                   <div className="flex items-center gap-4">
                     <span className="text-sm text-gray-700">
-                      {(currentPage - 1) * limit + 1}–{Math.min(currentPage * limit, totalItems)} of {totalItems}
+                      {credentials.length > 0 ? (currentPage - 1) * limit + 1 : 0}–{(currentPage - 1) * limit + credentials.length} of {totalItems}
                     </span>
                     
                     {/* Only show navigation buttons if there are multiple pages */}

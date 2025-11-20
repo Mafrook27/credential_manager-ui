@@ -1,17 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import ProtectedRoute from '../common/components/ProtectedRoute';
-import { MdMenu, MdLogout, MdAdminPanelSettings } from 'react-icons/md';
-import { IoShieldCheckmark } from 'react-icons/io5';
-import { useAuth } from '../common/hooks/useAuth';
-import { useDispatch } from 'react-redux';
-import { logout } from '../features/auth/redux/actions';
+import { MdMenu, MdAdminPanelSettings } from 'react-icons/md';
+import { UserProfileCard } from './components/UserProfileCard';
 
+import { useAuth } from '../common/hooks/useAuth';
+import { CiVault } from "react-icons/ci";
 const DashboardLayout: React.FC = () => {
   const { userInitials, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const location = useLocation();
 
   // Responsive layout state
@@ -19,6 +17,8 @@ const DashboardLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true); // Start collapsed
   const [isHoverExpanded, setIsHoverExpanded] = useState(false);
+  const [showProfileCard, setShowProfileCard] = useState(false);
+  const profileCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -31,6 +31,23 @@ const DashboardLayout: React.FC = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Close profile card when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileCardRef.current && !profileCardRef.current.contains(event.target as Node)) {
+        setShowProfileCard(false);
+      }
+    };
+
+    if (showProfileCard) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showProfileCard]);
 
   const handleToggleSidebar = () => {
     if (isMobile) {
@@ -69,15 +86,8 @@ const DashboardLayout: React.FC = () => {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await dispatch(logout() as any);
-      // The logout action will handle the redirect
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Force redirect even if logout fails
-      navigate('/login', { replace: true });
-    }
+  const handleAvatarClick = () => {
+    setShowProfileCard(!showProfileCard);
   };
 
   const sidebarComponent = (
@@ -111,9 +121,9 @@ const DashboardLayout: React.FC = () => {
             </button>
             <div className="flex items-center gap-2">
               {isAdmin ? (
-                <MdAdminPanelSettings className="w-6 h-6 text-red-500" />
+                <MdAdminPanelSettings className="w-6 h-6 text-blue-600" />
               ) : (
-                <IoShieldCheckmark className="w-6 h-6 text-blue-600" />
+                <CiVault className="w-6 h-6 text-blue-600" />
               )}
               <span className="font-bold text-lg text-gray-800 hidden sm:block">
                 SparkLMS
@@ -123,16 +133,19 @@ const DashboardLayout: React.FC = () => {
 
           {/* Right Section */}
           <div className="flex items-center gap-3">
-            <button 
-              onClick={handleLogout}
-              className="p-2 rounded-full hover:bg-gray-100" 
-              aria-label="Logout"
-            >
-              <MdLogout className="w-6 h-6 text-gray-600" />
-            </button>
-            <button className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
-              {userInitials}
-            </button>
+            <div className="relative" ref={profileCardRef}>
+              <button 
+                onClick={handleAvatarClick}
+                className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm hover:bg-blue-700 transition-colors"
+                aria-label="User profile"
+              >
+                {userInitials}
+              </button>
+              
+              {showProfileCard && (
+                <UserProfileCard onClose={() => setShowProfileCard(false)} />
+              )}
+            </div>
           </div>
         </header>
 

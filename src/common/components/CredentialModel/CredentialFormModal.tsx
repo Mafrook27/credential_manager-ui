@@ -17,7 +17,6 @@ import { SubInstanceAutocomplete } from './SubInstanceAutocomplete';
 import { ConfirmCreateDialog } from './ConfirmCreateDialog';
 import { instanceApi } from '../../api/instanceApi';
 import { toast } from '../../utils/toast';
-import GlobalLoader from '../GlobalLoader';
 
 interface CredentialField {
   id: string;
@@ -32,6 +31,7 @@ interface FormData {
   subInstanceId: string | null;
   subInstanceName: string;
   fields: CredentialField[];
+  url: string;
   notes: string;
 }
 
@@ -61,6 +61,7 @@ export const CredentialFormModal: React.FC<Props> = ({
     subInstanceId: null,
     subInstanceName: '',
     fields: [{ id: Date.now().toString(), key: '', value: '', showValue: false }],
+    url: '',
     notes: '',
   });
 
@@ -135,6 +136,7 @@ export const CredentialFormModal: React.FC<Props> = ({
             subInstanceId: initialData.subInstance?._id || initialData.subInstance?.subInstanceId || null,
             subInstanceName: initialData.subInstance?.name || '',
             fields: fieldsArray,
+            url: decryptedCred.url || '',
             notes: decryptedCred.notes || '',
           });
         } catch (err: any) {
@@ -353,6 +355,7 @@ export const CredentialFormModal: React.FC<Props> = ({
         ? {
             // Edit mode: only send credential fields (no rootId/subId)
             fields: fieldsArray,
+            url: formData.url || undefined,
             notes: formData.notes,
           }
         : {
@@ -360,6 +363,7 @@ export const CredentialFormModal: React.FC<Props> = ({
             rootId: formData.serviceId,
             subId: formData.subInstanceId,
             fields: fieldsArray,
+            url: formData.url || undefined,
             notes: formData.notes,
           };
 
@@ -400,6 +404,7 @@ export const CredentialFormModal: React.FC<Props> = ({
       subInstanceId: null,
       subInstanceName: '',
       fields: [{ id: Date.now().toString(), key: '', value: '', showValue: false }],
+      url: '',
       notes: '',
     });
     setErrors({});
@@ -443,7 +448,7 @@ export const CredentialFormModal: React.FC<Props> = ({
         >
           {loading && isEditMode ? (
             <div className="flex items-center justify-center py-8">
-                       <GlobalLoader/>
+                        <CircularProgress />
             </div>
           ) : (
           <div className="space-y-4">
@@ -506,7 +511,7 @@ export const CredentialFormModal: React.FC<Props> = ({
                   variant="outlined"
                   sx={{ textTransform: 'none' }}
                 >
-                  + Add Field
+                  + Add More
                 </Button>
               </div>
               
@@ -571,7 +576,18 @@ export const CredentialFormModal: React.FC<Props> = ({
               )}
             </div>
 
-
+            {/* URL */}
+            <TextField
+              fullWidth
+              label="URL (Optional)"
+              value={formData.url}
+              onChange={(e) =>
+                setFormData({ ...formData, url: e.target.value })
+              }
+              placeholder="https://example.com"
+              size="small"
+              type="url"
+            />
 
             {/* Notes */}
             <TextField
@@ -605,7 +621,13 @@ export const CredentialFormModal: React.FC<Props> = ({
             variant="contained"
             color="primary"
             startIcon={loading ? <CircularProgress size={16} /> : <FaSave />}
-            disabled={loading}
+            disabled={
+              loading || 
+              !formData.serviceId || 
+              !formData.subInstanceId || 
+              formData.fields.length === 0 ||
+              formData.fields.some(field => !field.key.trim() || !field.value.trim())
+            }
             fullWidth
             sx={{ order: { xs: 1, sm: 2 } }}
           >

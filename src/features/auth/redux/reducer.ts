@@ -40,24 +40,26 @@ const authReducer = (state = initialState, action: AuthAction): AuthState => {
     case types.REGISTER_SUCCESS:
     case types.GET_USER_PROFILE_SUCCESS:
       // Backend uses HTTP-only cookies, no token handling needed
-      // console.log('🔍 Auth Success Payload:', action.payload);
-      // console.log('🔍 User Data:', action.payload.data.user);
-      // console.log('🔍 isVerified from backend:', action.payload.data.user?.isVerified);
-      
-      if (action.payload && typeof action.payload === 'object' && 'data' in action.payload) {
-        const successPayload = action.payload as AuthResponse;
-        return {
-          ...state,
-          user: successPayload.data.user,
-          token: null, // No token needed with cookie auth
-          isAuthenticated: true,
-          isVerified: successPayload.data.user?.isVerified ?? false,
-          isActive: successPayload.data.user?.isActive ?? true,
-          loading: false,
-          error: null,
-        };
+      if (!action.payload || typeof action.payload !== 'object' || !('data' in action.payload)) {
+        return state;
       }
-      return state;
+      
+      console.log('🔍 Auth Success Payload:', action.payload);
+      console.log('🔍 User Data:', action.payload.data?.user);
+      console.log('🔍 lastLogin from backend:', action.payload.data?.user?.lastLogin);
+      
+      const successPayload = action.payload as AuthResponse;
+      console.log('✅ Storing user in Redux with lastLogin:', successPayload.data.user.lastLogin);
+      return {
+        ...state,
+        user: successPayload.data.user,
+        token: null, // No token needed with cookie auth
+        isAuthenticated: true,
+        isVerified: successPayload.data.user?.isVerified ?? false,
+        isActive: successPayload.data.user?.isActive ?? true,
+        loading: false,
+        error: null,
+      };
 
     case types.LOGIN_FAILURE:
     case types.REGISTER_FAILURE:

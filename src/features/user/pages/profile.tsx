@@ -90,8 +90,14 @@ export const Profile: React.FC = () => {
       try {
         setLoading(true);
         const profileData = await userApi.getProfile(userId);
-        console.log('Profile data:', profileData);
-        setUser(profileData);
+        console.log('Profile data from API:', profileData);
+        console.log('lastLogin from Redux:', authUser?.lastLogin);
+        
+        // Use lastLogin from Redux (which has previous login time), not from API
+        setUser({
+          ...profileData,
+          lastLogin: authUser?.lastLogin || profileData.lastLogin
+        });
       } catch (error: unknown) {
         console.error('Error:', error);
         // Only show error if not handled by interceptor

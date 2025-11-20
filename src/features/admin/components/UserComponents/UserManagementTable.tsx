@@ -62,9 +62,9 @@ export const UserManagementTable: React.FC = () => {
         const backendPage = paginationModel.page + 1;
         const response = await adminApi.getAllUsers(backendPage, paginationModel.pageSize);
         
-        // Map backend users to frontend format and filter out deleted users
+        // Map backend users to frontend format and filter out deleted users and admins
         const mappedUsers: User[] = response.data.users
-          .filter((backendUser: any) => !backendUser.isDeleted) // Only show non-deleted users
+          .filter((backendUser: any) => !backendUser.isDeleted && backendUser.role !== 'admin') // Exclude deleted users and admins
           .map((backendUser: any) => ({
             id: backendUser._id,
             name: backendUser.name,
@@ -78,8 +78,12 @@ export const UserManagementTable: React.FC = () => {
             status: !backendUser.isActive ? 'inactive' : (backendUser.isVerified ? 'active' : 'pending'),
           }));
         
+        // Calculate total excluding admins from the response
+        const totalNonAdmins = response.data.users.filter((u: any) => u.role !== 'admin').length;
+        const adjustedTotal = response.total - (response.data.users.length - totalNonAdmins);
+        
         setUsers(mappedUsers);
-        setTotalRows(response.total);
+        setTotalRows(adjustedTotal);
         
         console.log('✅ Users fetched:', mappedUsers.length, 'Total:', response.total);
       } catch (err: any) {

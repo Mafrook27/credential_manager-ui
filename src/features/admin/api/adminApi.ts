@@ -146,6 +146,22 @@ export const adminApi = {
     return response.data;
   },
 
+  // Reject user
+  rejectUser: async (userId: string) => {
+    const response = await axiosInstance.patch(
+      `/admin/users/${userId}/reject`
+    );
+    return response.data;
+  },
+
+  // Undo user rejection
+  undoRejection: async (userId: string) => {
+    const response = await axiosInstance.patch(
+      `/admin/users/${userId}/undo-rejection`
+    );
+    return response.data;
+  },
+
   // Set user active status (block/unblock)
   setUserActiveStatus: async (userId: string, isActive: boolean) => {
     const response = await axiosInstance.patch(
