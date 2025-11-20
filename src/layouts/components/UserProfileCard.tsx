@@ -10,7 +10,7 @@ interface UserProfileCardProps {
 }
 
 export const UserProfileCard: React.FC<UserProfileCardProps> = ({ onClose }) => {
-  const { user, userInitials, isAdmin } = useAuth();
+  const { user, userInitials} = useAuth();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 

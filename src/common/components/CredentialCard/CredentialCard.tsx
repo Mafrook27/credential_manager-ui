@@ -419,8 +419,7 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
                     return (
                       <div key={field.id}>
                         <h4 className="text-sm font-medium text-gray-440 capitalize mb-2">{field.key}</h4>
-                       <div className="flex gap-2 relative  gap-2 ">
-                        <div className="flex-1 relative bg-gray-50 rounded-lg px-2 py-2 border border-gray-200 flex items-center justify-between gap-2">
+                        <div className="relative bg-gray-50 rounded-lg px-2 py-2 border border-gray-200 flex items-center justify-between gap-2">
                           <p className={`text-sm m-auto text-gray-900 break-all flex-1 ${field.key.toLowerCase().includes('password') ? 'font-mono' : ''}`}>
                             {displayValue}
                           </p>
@@ -433,11 +432,7 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
                             >
                               <MdContentCopy size={14} />
                             </button>
-                             
-                          </div>
-                          
-                        </div>
-                           <button
+                                <button
                               onClick={toggleFieldVisibility}
                               className="text-gray-600 hover:text-gray-900 transition-colors p-0"
                               title={isFieldVisible ? "Hide" : "Show"}
@@ -445,8 +440,8 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
                             >
                               {isFieldVisible ? <MdVisibilityOff size={16} /> : <MdVisibility size={16} />}
                             </button>
-
-                         </div>   
+                          </div>
+                        </div>
                       </div>
                     );
                   })}
