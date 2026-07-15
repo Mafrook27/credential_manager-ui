@@ -9,6 +9,12 @@ import type { LoginCredentials } from '../redux/types';
 import { useTheme } from '@mui/material/styles';
 import { getDefaultDashboard } from '../../../common/utils/auth.uitls';
 import { showSessionExpiredMessage } from '../../../utils/sessionExpiry';
+import { GoogleSignInButton } from '../../../common/components/GoogleSignInButton';
+// Demo mode - only meaningful if the backend was booted with DEMO_MODE=true (see Config/seedDemo.js)
+const DEMO_EMAIL = import.meta.env.VITE_DEMO_EMAIL || 'demo@example.com';
+const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD || 'Demo@1234';
+const SHOW_DEMO_LOGIN = import.meta.env.VITE_DEMO_MODE === 'true';
+
 interface FieldErrors {
   email?: string;
   password?: string;
@@ -49,6 +55,22 @@ function LoginForm() {
     if (location.state?.message) {
       setSuccessMessage(location.state.message);
       window.history.replaceState({}, document.title);
+    }
+
+    // Messages coming back from the Google OAuth redirect
+    const oauthError = searchParams.get('error');
+    const oauthInfo = searchParams.get('info');
+    if (oauthError === 'google_auth_failed') {
+      setGeneralError('Google sign-in failed. Please try again or use email/password.');
+    }
+    if (oauthInfo === 'pending_approval') {
+      setSuccessMessage('Signed in with Google. Your account is awaiting admin approval.');
+    }
+    if (oauthError || oauthInfo) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('error');
+      newParams.delete('info');
+      navigate({ search: newParams.toString() }, { replace: true });
     }
   }, [location, searchParams, navigate]);
 
@@ -111,23 +133,17 @@ function LoginForm() {
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const performLogin = async (credentials: LoginCredentials) => {
     setGeneralError('');
-
-    if (!validateForm()) {
-      return;
-    }
-
     setLoading(true);
     try {
       // Normalize email before sending to backend
       const normalizedData = {
-        ...formData,
-        email: formData.email.toLowerCase().trim()
+        ...credentials,
+        email: credentials.email.toLowerCase().trim()
       };
       const result = await dispatch(login(normalizedData) as any);
-      
+
       // Validate login response
       if (!result?.data?.user) {
         throw new Error('Invalid login response');
@@ -136,7 +152,7 @@ function LoginForm() {
       // Navigate to appropriate dashboard based on user role
       const userRole = result.data.user.role;
       const dashboardPath = getDefaultDashboard(userRole);
-      
+
       navigate(dashboardPath, { replace: true });
     } catch (err: any) {
       console.error('Login error:', err);
@@ -172,6 +188,16 @@ function LoginForm() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    await performLogin(formData);
+  };
+
+  const handleTryDemo = async () => {
+    await performLogin({ email: DEMO_EMAIL, password: DEMO_PASSWORD });
   };
 
   return (
@@ -255,6 +281,21 @@ function LoginForm() {
         >
           {loading ? 'Logging in...' : 'Login'}
         </Button>
+
+        <GoogleSignInButton />
+
+        {SHOW_DEMO_LOGIN && (
+          <Button
+            type="button"
+            onClick={handleTryDemo}
+            variant="text"
+            fullWidth
+            disabled={loading}
+            sx={{ mb: 2, textTransform: 'none', fontSize: '14px', color: 'text.secondary' }}
+          >
+            Try Demo Account (sample data only)
+          </Button>
+        )}
 
         <p className="text-center text-muted small mt-3 mb-0">
           Don't have an account?{' '}

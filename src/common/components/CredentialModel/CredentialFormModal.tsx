@@ -1,6 +1,6 @@
 // src/common/components/CredentialModal/CredentialFormModal.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -11,12 +11,15 @@ import {
   IconButton,
   CircularProgress,
 } from '@mui/material';
-import { FaTimes, FaSave, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaTimes, FaSave, FaEye, FaEyeSlash, FaFileUpload } from 'react-icons/fa';
 import { ServiceAutocomplete } from './ServiceAutocomplete';
 import { SubInstanceAutocomplete } from './SubInstanceAutocomplete';
 import { ConfirmCreateDialog } from './ConfirmCreateDialog';
 import { instanceApi } from '../../api/instanceApi';
 import { toast } from '../../utils/toast';
+import { parseEnvFile } from '../../utils/envParser';
+
+const MAX_IMPORT_FILE_SIZE = 1024 * 1024; // 1MB
 
 interface CredentialField {
   id: string;
@@ -68,6 +71,8 @@ export const CredentialFormModal: React.FC<Props> = ({
   // UI state
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Autocomplete data
   const [rootInstances, setRootInstances] = useState<any[]>([]);
@@ -321,6 +326,80 @@ export const CredentialFormModal: React.FC<Props> = ({
     }
   };
 
+  const handleImportFile = (file: File) => {
+    if (!file) return;
+
+    const isTextLike = /\.(env|txt)$/i.test(file.name) || file.type === 'text/plain' || file.type === '';
+    if (!isTextLike) {
+      toast.error('Please drop a .env or .txt file');
+      return;
+    }
+
+    if (file.size > MAX_IMPORT_FILE_SIZE) {
+      toast.error('File is too large (max 1MB)');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = typeof reader.result === 'string' ? reader.result : '';
+      const parsed = parseEnvFile(text);
+
+      if (parsed.length === 0) {
+        toast.error('No KEY=VALUE pairs found in that file');
+        return;
+      }
+
+      const importedFields = parsed.map((f, index) => ({
+        id: `imported-${Date.now()}-${index}`,
+        key: f.key,
+        value: f.value,
+        showValue: false,
+      }));
+
+      setFormData((prev) => {
+        // Replace the single placeholder empty row, otherwise append after existing fields
+        const isOnlyEmptyPlaceholder =
+          prev.fields.length === 1 && !prev.fields[0].key.trim() && !prev.fields[0].value.trim();
+
+        return {
+          ...prev,
+          fields: isOnlyEmptyPlaceholder ? importedFields : [...prev.fields, ...importedFields],
+        };
+      });
+
+      setErrors((prev) => ({ ...prev, fields: '' }));
+      toast.success(`Imported ${parsed.length} field${parsed.length === 1 ? '' : 's'} from ${file.name}`);
+    };
+    reader.onerror = () => {
+      toast.error('Failed to read file');
+    };
+    reader.readAsText(file);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleImportFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleImportFile(file);
+    e.target.value = '';
+  };
+
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
@@ -495,6 +574,29 @@ export const CredentialFormModal: React.FC<Props> = ({
               }))}
               loading={loadingSubInstances}
             />
+
+            {/* Import from .env / .txt */}
+            <div
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onClick={() => fileInputRef.current?.click()}
+              className={`flex items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-4 text-center cursor-pointer transition-colors ${
+                isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50/50'
+              }`}
+            >
+              <FaFileUpload className={isDragging ? 'text-blue-500' : 'text-gray-400'} />
+              <span className="text-sm text-gray-600">
+                Drag &amp; drop a <strong>.env</strong> or <strong>.txt</strong> file here, or click to browse
+              </span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".env,.txt,text/plain"
+                onChange={handleFileInputChange}
+                className="hidden"
+              />
+            </div>
 
             {/* Dynamic Credential Fields */}
             <div className="space-y-3">

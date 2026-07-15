@@ -7,6 +7,7 @@ import { register } from '../redux/actions';
 import Input from '../../../common/components/Input';
 import type { RegisterData } from '../redux/types';
 import { AxiosError } from 'axios';
+import { GoogleSignInButton } from '../../../common/components/GoogleSignInButton';
 
 interface FieldErrors {
   name?: string;
@@ -257,6 +258,8 @@ function RegisterForm() {
         >
           {loading ? 'Creating Account...' : 'Create Account'}
         </Button>
+
+        <GoogleSignInButton label="Sign up with Google" />
 
         <p className="text-center text-muted small mt-3 mb-0">
           Already have an account?{' '}
