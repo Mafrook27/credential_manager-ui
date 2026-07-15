@@ -7,6 +7,7 @@ import GlobalLoader from '../common/components/GlobalLoader';
 const LoginPage = lazy(() => import('../features/auth/pages/index').then(m => ({ default: m.LoginPage })));
 const RegisterPage = lazy(() => import('../features/auth/pages/index').then(m => ({ default: m.RegisterPage })));
 const ResetPasswordPage = lazy(() => import('../features/auth/pages/index').then(m => ({ default: m.ResetPasswordPage })));
+const OAuthCallbackPage = lazy(() => import('../features/auth/pages/index').then(m => ({ default: m.OAuthCallbackPage })));
 const DashboardLayout = lazy(() => import('../layouts/DashboardLayout'));
 const AdminDashboard = lazy(() => import('../features/admin/pages/AdminDashboard'));
 const UserManagementPage = lazy(() => import('../features/admin/pages/UserManagementPage').then(m => ({ default: m.UserManagementPage })));
@@ -43,6 +44,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
 
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<UserDashboard />} />

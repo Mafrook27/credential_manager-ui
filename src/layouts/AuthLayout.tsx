@@ -76,7 +76,16 @@ function AuthLayout({ children, image, title, subtitle }: AuthLayoutProps) {
             </Box>
 
             {/* Dynamic Content (Login/Register/Forgot forms) */}
-            {children}
+            <Box
+              sx={{
+                bgcolor: 'white',
+                borderRadius: '16px',
+                p: { xs: 3, sm: 4 },
+                boxShadow: '0 10px 30px -10px rgba(41, 98, 255, 0.15), 0 4px 12px -4px rgba(0, 0, 0, 0.08)',
+              }}
+            >
+              {children}
+            </Box>
           </Box>
         </Grid>
       </Grid>

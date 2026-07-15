@@ -7,8 +7,11 @@ import { UserProfileCard } from './components/UserProfileCard';
 
 import { useAuth } from '../common/hooks/useAuth';
 import { CiVault } from "react-icons/ci";
+const DEMO_EMAIL = (import.meta.env.VITE_DEMO_EMAIL || 'demo@example.com').toLowerCase();
+
 const DashboardLayout: React.FC = () => {
-  const { userInitials, isAdmin } = useAuth();
+  const { userInitials, isAdmin, userEmail } = useAuth();
+  const isDemoAccount = userEmail?.toLowerCase() === DEMO_EMAIL;
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -148,6 +151,12 @@ const DashboardLayout: React.FC = () => {
             </div>
           </div>
         </header>
+
+        {isDemoAccount && (
+          <div className="bg-amber-50 border-b border-amber-200 text-amber-800 text-xs sm:text-sm text-center py-1.5 px-3 shrink-0">
+            You're viewing a <strong>demo account</strong> — all data shown is fake sample data, not real credentials.
+          </div>
+        )}
 
         <div className="flex flex-1 overflow-hidden">
           {/* Desktop Sidebar */}

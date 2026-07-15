@@ -419,7 +419,7 @@ const handleOpenEditModal = useCallback((credential: ApiCredential) => {
             </div>
             <button
               onClick={handleOpenCreateModal}
-              className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium whitespace-nowrap"
+              className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover:shadow-card-hover transition-all duration-200 text-xs sm:text-sm font-medium whitespace-nowrap"
             >
               + Add Credential
             </button>
