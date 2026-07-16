@@ -4,7 +4,8 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { CredentialCard } from '../../../common/components/CredentialCard';
 import { CredentialFormModal } from '../../../common/components/CredentialModel';
 import { toast } from '../../../common/utils/toast';
-import { IoSearch } from 'react-icons/io5';
+import { IoSearch, IoDownloadOutline } from 'react-icons/io5';
+import { exportAllCredentials } from '../../../common/utils/exportCredentials';
 import { useDebounce } from '../../../common/hooks/useDebounce';
 import { Autocomplete, TextField, Pagination } from '@mui/material';
 import { userCredentialApi } from '../api/user.credential.api';
@@ -72,6 +73,7 @@ export const UserCredentialPage: React.FC = () => {
   
   // Card interaction state
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [isExportingAll, setIsExportingAll] = useState<boolean>(false);
 
   const debouncedSearchQuery = useDebounce<string>(searchQuery, 500);
   const isDebouncing = searchQuery !== debouncedSearchQuery;
@@ -306,6 +308,80 @@ export const UserCredentialPage: React.FC = () => {
     }
   }, []);
 
+  const handleExportAll = useCallback(async () => {
+    setIsExportingAll(true);
+    try {
+      // Pull every credential matching the current search (across all pages)
+      const response = await userCredentialApi.getCredentials({
+        search: debouncedSearchQuery || undefined,
+        page: 1,
+        limit: 1000,
+      });
+      const allCredentials = (response.data.credentials as unknown as ApiCredential[]) || [];
+
+      // Apply the same filters currently applied to the visible grid
+      const toExport = allCredentials.filter((cred) => {
+        if (ownershipFilter === 'owned' && !cred.isOwner) return false;
+        if (ownershipFilter === 'shared' && cred.isOwner) return false;
+
+        const credServiceName =
+          (cred as unknown as { rootInstance?: { serviceName: string } })?.rootInstance?.serviceName ||
+          cred.serviceName;
+        const credSubName =
+          (cred as unknown as { subInstance?: { name: string } })?.subInstance?.name ||
+          cred.subInstanceName;
+
+        if (selectedRootInstance && credServiceName !== selectedRootInstance.serviceName) return false;
+        if (selectedSubInstance && credSubName !== selectedSubInstance.name) return false;
+        return true;
+      });
+
+      if (toExport.length === 0) {
+        toast.error('No credentials to export');
+        return;
+      }
+
+      const exported: Array<{
+        serviceName: string;
+        credentialName?: string;
+        fields: Array<{ key: string; value: string }>;
+        url?: string;
+        notes?: string;
+        createdAt?: string;
+      }> = [];
+
+      for (const cred of toExport) {
+        try {
+          const decrypted = await handleDecrypt(cred._id);
+          const credData = cred.credentialData || cred;
+          exported.push({
+            serviceName:
+              (cred as unknown as { rootInstance?: { serviceName: string } })?.rootInstance?.serviceName ||
+              cred.serviceName,
+            credentialName:
+              (cred as unknown as { subInstance?: { name: string } })?.subInstance?.name ||
+              cred.subInstanceName,
+            fields: decrypted.fields || [],
+            url: credData.url || cred.url,
+            notes: credData.notes || cred.notes,
+            createdAt: cred.createdAt,
+          });
+        } catch (err) {
+          console.error(`Failed to decrypt credential ${cred._id} for export`, err);
+        }
+      }
+
+      exportAllCredentials(exported);
+      toast.success(`Exported ${exported.length} credential${exported.length === 1 ? '' : 's'}`);
+    } catch (err: unknown) {
+      if (shouldShowError(err)) {
+        toast.error(getErrorMessage(err, 'Failed to export credentials'));
+      }
+    } finally {
+      setIsExportingAll(false);
+    }
+  }, [debouncedSearchQuery, ownershipFilter, selectedRootInstance, selectedSubInstance, handleDecrypt]);
+
   const handleShare = useCallback(
     async (credentialId: string, userIdOrIds: string | string[]) => {
       try {
@@ -417,12 +493,23 @@ const handleOpenEditModal = useCallback((credential: ApiCredential) => {
                 Manage your credentials and shared access
               </p>
             </div>
-            <button
-              onClick={handleOpenCreateModal}
-              className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover:shadow-card-hover transition-all duration-200 text-xs sm:text-sm font-medium whitespace-nowrap"
-            >
-              + Add Credential
-            </button>
+            <div className="w-full sm:w-auto flex gap-2">
+              <button
+                onClick={handleExportAll}
+                disabled={isExportingAll || filteredCredentials.length === 0}
+                title="Export the credentials currently shown below as a JSON file"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition-all duration-200 text-xs sm:text-sm font-medium whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <IoDownloadOutline className="w-4 h-4" />
+                {isExportingAll ? 'Exporting…' : 'Export All'}
+              </button>
+              <button
+                onClick={handleOpenCreateModal}
+                className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover:shadow-card-hover transition-all duration-200 text-xs sm:text-sm font-medium whitespace-nowrap"
+              >
+                + Add Credential
+              </button>
+            </div>
           </div>
         </div>
 
