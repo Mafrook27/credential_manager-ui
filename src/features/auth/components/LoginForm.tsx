@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation, useSearchParams } from 'react-router-dom';
 import { Button, Alert, Box } from '@mui/material';
-import { Email, Lock } from '@mui/icons-material';
+import { Email, Lock, Visibility } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { login } from '../redux/actions';
 import Input from '../../../common/components/Input';
@@ -11,9 +11,10 @@ import { getDefaultDashboard } from '../../../common/utils/auth.uitls';
 import { showSessionExpiredMessage } from '../../../utils/sessionExpiry';
 import { GoogleSignInButton } from '../../../common/components/GoogleSignInButton';
 // Demo mode - only meaningful if the backend was booted with DEMO_MODE=true (see Config/seedDemo.js)
+// Shown by default so visitors can explore the app; set VITE_DEMO_MODE=false to hide it.
 const DEMO_EMAIL = import.meta.env.VITE_DEMO_EMAIL || 'demo@example.com';
 const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD || 'Demo@1234';
-const SHOW_DEMO_LOGIN = import.meta.env.VITE_DEMO_MODE === 'true';
+const SHOW_DEMO_LOGIN = import.meta.env.VITE_DEMO_MODE !== 'false';
 
 interface FieldErrors {
   email?: string;
@@ -288,12 +289,26 @@ function LoginForm() {
           <Button
             type="button"
             onClick={handleTryDemo}
-            variant="text"
+            variant="outlined"
             fullWidth
             disabled={loading}
-            sx={{ mb: 2, textTransform: 'none', fontSize: '14px', color: 'text.secondary' }}
+            startIcon={<Visibility sx={{ fontSize: '18px' }} />}
+            sx={{
+              mt: 1.5,
+              mb: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '14px',
+              borderRadius: '8px',
+              borderColor: theme.palette.primary.main,
+              color: theme.palette.primary.main,
+              '&:hover': {
+                backgroundColor: 'rgba(41, 98, 255, 0.06)',
+                borderColor: theme.palette.primary.main,
+              },
+            }}
           >
-            Try Demo Account (sample data only)
+            {loading ? 'Loading demo...' : 'View Demo App (no signup needed)'}
           </Button>
         )}
 

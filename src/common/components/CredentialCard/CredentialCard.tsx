@@ -1,10 +1,11 @@
 // src/common/components/CredentialCard/CredentialCard.tsx
 
 import React, { useState } from 'react';
-import { MdDelete, MdVisibility, MdContentCopy, MdEdit, MdShare, MdMoreVert, MdVisibilityOff, MdKey, MdPerson } from 'react-icons/md';
+import { MdDelete, MdVisibility, MdContentCopy, MdEdit, MdShare, MdMoreVert, MdVisibilityOff, MdKey, MdPerson, MdFileDownload } from 'react-icons/md';
 import { ActionCard } from '../ActionCard';
 import type { User } from '../../../features/admin/types/user.types';
 import { toast } from 'react-toastify';
+import { exportSingleCredential } from '../../utils/exportCredentials';
 
 export interface CredentialField {
   id: string;
@@ -72,6 +73,7 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
   const [isDecrypting, setIsDecrypting] = useState(false);
   const [isDecrypted, setIsDecrypted] = useState(false);
   const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set()); // Track which fields are visible
+  const [isExporting, setIsExporting] = useState(false);
 
   // Reset state when shouldResetState changes
   React.useEffect(() => {
@@ -192,6 +194,32 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
     }
   };
 
+  // Export this credential (decrypted) as a downloadable JSON file
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      let fieldsToExport = decryptedFields;
+      if (!isDecrypted || fieldsToExport.length === 0) {
+        const decrypted = await handleDecrypt();
+        fieldsToExport = decrypted?.fields || decryptedFields;
+      }
+
+      exportSingleCredential({
+        serviceName,
+        credentialName,
+        fields: fieldsToExport,
+        url,
+        notes,
+      });
+      toast.success('Credential exported', { position: 'top-right', autoClose: 2000 });
+    } catch (error) {
+      console.error('Failed to export credential:', error);
+      toast.error('Failed to export credential');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <>
       {/* Card - Professional Design */}
@@ -220,14 +248,13 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
           </div>
 
 
-          {/* Only show menu if there are actions available */}
-          {(onEdit || onShare || onDelete) && (
-            <div className="relative flex-shrink-0 credential-card-menu">
-              <button 
+          {/* Menu - export is always available, other actions depend on ownership */}
+          <div className="relative flex-shrink-0 credential-card-menu">
+              <button
                 onClick={() => {
                   onCardInteraction?.(id);
                   setIsMenuOpen(!isMenuOpen);
-                }} 
+                }}
                 className="text-gray-400 hover:text-gray-600 p-1 hover:bg-gray-50 rounded"
               >
                 <MdMoreVert className="w-4 h-4"/>
@@ -253,6 +280,14 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
                         <span>Share</span>
                       </button>
                     )}
+                    <button
+                      onClick={() => { handleExport(); setIsMenuOpen(false); }}
+                      disabled={isExporting}
+                      className="flex items-center gap-2 w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      <MdFileDownload className="w-3.5 h-3.5 text-gray-500"/>
+                      <span>{isExporting ? 'Exporting…' : 'Export'}</span>
+                    </button>
                     {onDelete && (
                       <button
                         onClick={() => setShowDeleteModal(true)}
@@ -266,7 +301,6 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
                 </div>
               )}
             </div>
-          )}
         </header>
 
         {/* Fields - Compact Table */}
@@ -540,6 +574,14 @@ export const CredentialCard: React.FC<CredentialCardProps> = ({
                   <span>Share</span>
                 </button>
               )}
+              <button
+                onClick={handleExport}
+                disabled={isExporting}
+                className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 px-3 sm:px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm sm:text-base disabled:opacity-50"
+              >
+                <MdFileDownload size={16} className="sm:w-[18px] sm:h-[18px]" />
+                <span>{isExporting ? 'Exporting…' : 'Export'}</span>
+              </button>
               {onDelete && (
                 <button
                   onClick={() => {
